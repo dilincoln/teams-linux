@@ -191,7 +191,7 @@ window.addEventListener("DOMContentLoaded", () => {
 ipcRenderer.on("calendar-refresh", () => fetchCalendar());
 
 // ---- Próxima reunião no cabeçalho, à esquerda dos botões do canto direito do Teams ----
-const NEXT_MEETING_GAP = 50;
+const NEXT_MEETING_GAP = 8;
 let nextMeeting = null; // { subject, start, end, color, account } (de todas as contas)
 let nextMeetingEl = null;
 

@@ -36,7 +36,7 @@ const PAGE_CSS = `
 #teams-linux-switcher {
   position: fixed; top: 4px; left: 4px; z-index: 2147483647;
   display: flex; align-items: center; gap: 8px; box-sizing: border-box;
-  width: 160px; height: 40px; padding: 0 10px 0 7px; border-radius: 6px;
+  max-width: 160px; height: 40px; padding: 0 10px 0 7px; border-radius: 6px;
   font: 600 13px/1 "Segoe UI", system-ui, "Noto Sans", sans-serif;
   background: transparent; cursor: pointer; user-select: none;
 }
@@ -46,7 +46,7 @@ const PAGE_CSS = `
   flex: none; display: grid; place-items: center;
   width: 26px; height: 26px; border-radius: 50%; color: #fff; font-size: 12px;
 }
-#teams-linux-switcher .tls-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#teams-linux-switcher .tls-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #teams-linux-switcher .tls-bell { position: relative; flex: none; display: grid; place-items: center; opacity: 0.6; }
 #teams-linux-switcher .tls-bell.tls-active { opacity: 1; }
 #teams-linux-switcher .tls-badge {
