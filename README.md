@@ -10,11 +10,7 @@ Electron · Wayland · KDE Plasma · Arch / pacman
 
 </div>
 
-<div align="center">
-
-[![Showcase video](docs/poster.jpg)](docs/teams-linux.mp4)
-
-</div>
+https://github.com/user-attachments/assets/2491dec6-21bf-484d-8190-02d2c6fe07e8
 
 ---
 
