@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'" />
+    <title>Reunião — Teams</title>
+    <link rel="stylesheet" href="alert.css" />
+  </head>
+  <body>
+    <main class="alert">
+      <p id="when" class="when"></p>
+      <h1 id="subject"></h1>
+      <p class="meta">
+        <span id="time"></span>
+        <span id="account" class="account" hidden><span id="account-dot" class="dot"></span><span id="account-name"></span></span>
+      </p>
+      <div class="actions">
+        <button type="button" id="join" class="btn primary">Entrar</button>
+        <button type="button" id="snooze" class="btn">Lembrar na hora</button>
+        <button type="button" id="dismiss" class="btn">Dispensar</button>
+      </div>
+      <p class="hint">Enter entra · Esc dispensa</p>
+    </main>
+    <script src="alert.js"></script>
+  </body>
+</html>

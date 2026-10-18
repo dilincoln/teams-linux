@@ -1,0 +1,114 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 35%, #23234a 0%, #0d0d12 70%);
+  color: #fff;
+  font: 16px/1.4 "Segoe UI", system-ui, "Noto Sans", sans-serif;
+  user-select: none;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 48px;
+  text-align: center;
+}
+
+.when {
+  margin: 0 0 16px;
+  color: #9ea2ff;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.when.now {
+  color: #ff7b7b;
+}
+
+h1 {
+  max-width: 1100px;
+  margin: 0 0 20px;
+  font-size: clamp(32px, 5vw, 64px);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 48px;
+  color: #b8b8c8;
+  font-size: 20px;
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account[hidden],
+.btn[hidden] {
+  display: none;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+}
+
+.btn {
+  min-width: 150px;
+  height: 48px;
+  padding: 0 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.btn:focus-visible {
+  outline: 2px solid #9ea2ff;
+  outline-offset: 2px;
+}
+
+.btn.primary {
+  border-color: #5b5fc7;
+  background: #5b5fc7;
+}
+
+.btn.primary:hover {
+  background: #6b6fd8;
+}
+
+.hint {
+  margin: 28px 0 0;
+  color: #6f6f80;
+  font-size: 14px;
+}

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'" />
+    <title>Teams</title>
+    <link rel="stylesheet" href="ui.css" />
+  </head>
+  <body>
+    <!-- Aberto, o dropdown faz a view cobrir a janela; clicar fora fecha. -->
+    <div id="menu-backdrop" hidden>
+      <div id="menu" role="menu" aria-label="Contas"></div>
+    </div>
+
+    <main id="loading" hidden>
+      <div class="card">
+        <h1>Carregando contas…</h1>
+        <p class="muted">Cada conta precisa abrir uma vez para receber notificações em segundo plano.</p>
+        <ul id="loading-list" class="loading-list"></ul>
+        <div class="actions">
+          <button type="button" id="loading-skip" class="btn">Pular</button>
+        </div>
+      </div>
+    </main>
+
+    <main id="overlay" hidden>
+      <form id="account-form" class="card" hidden>
+        <h1 id="form-title">Adicionar conta</h1>
+        <p id="form-intro" class="muted" hidden>
+          Cada conta roda isolada, com sua própria sessão. Depois de adicionar, faça login normalmente.
+        </p>
+
+        <label class="field">
+          <span>Nome</span>
+          <input id="name" name="name" required maxlength="40" placeholder="Ex.: Trabalho, Cliente X" autocomplete="off" />
+        </label>
+
+        <fieldset class="field" id="kind-field">
+          <legend>Tipo de conta</legend>
+          <div class="segmented">
+            <label><input type="radio" name="kind" value="work" checked /><span>Trabalho ou escola</span></label>
+            <label><input type="radio" name="kind" value="personal" /><span>Pessoal</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>Cor</legend>
+          <div id="colors" class="colors"></div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" id="cancel" class="btn">Cancelar</button>
+          <button type="submit" id="submit" class="btn primary">Adicionar</button>
+        </div>
+      </form>
+
+      <form id="settings-card" class="card" hidden>
+        <h1>Configurações</h1>
+
+        <label class="field">
+          <span>Lembrete de não lidas (segundos)</span>
+          <input id="reminder-seconds" type="number" min="0" step="1" inputmode="numeric" />
+          <small class="hint">Repete a notificação enquanto houver mensagens não lidas. 0 desliga; o mínimo é 10.</small>
+        </label>
+
+        <label class="check-field">
+          <input id="sound" type="checkbox" />
+          <span>
+            Tocar som nas notificações
+            <small class="hint">Vale também para os lembretes de não lidas.</small>
+          </span>
+        </label>
+
+        <div class="field">
+          <span>Som</span>
+          <div class="sound-row">
+            <select id="sound-name" aria-label="Som"></select>
+            <button type="button" id="sound-preview" class="btn">Ouvir</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span>Aviso em tela cheia antes das reuniões</span>
+          <div class="sound-row">
+            <select id="meeting-alert" aria-label="Aviso em tela cheia">
+              <option value="off">Desligado</option>
+              <option value="0">Na hora</option>
+              <option value="1">1 min antes</option>
+              <option value="2">2 min antes</option>
+              <option value="5">5 min antes</option>
+              <option value="10">10 min antes</option>
+              <option value="15">15 min antes</option>
+              <option value="30">30 min antes</option>
+            </select>
+            <button type="button" id="meeting-alert-test" class="btn">Testar</button>
+          </div>
+        </div>
+
+        <label class="check-field">
+          <input id="show-next-meeting" type="checkbox" />
+          <span>
+            Mostrar a próxima reunião no cabeçalho
+            <small class="hint">Ex.: "Daily em 12 min", ao lado dos botões do canto direito do Teams.</small>
+          </span>
+        </label>
+
+        <label class="check-field">
+          <input id="keep-active" type="checkbox" />
+          <span>
+            Não deixar o Teams ficar Ausente
+            <small class="hint">Mantém o status Disponível mesmo com a janela escondida ou sem uso.</small>
+          </span>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="settings-cancel" class="btn">Cancelar</button>
+          <button type="submit" class="btn primary">Salvar</button>
+        </div>
+      </form>
+
+      <div id="remove-card" class="card" hidden>
+        <h1>Remover conta?</h1>
+        <p class="muted">
+          A conta <strong id="remove-name"></strong> sai do app e a sessão e os dados locais dela são apagados.
+        </p>
+        <div class="actions">
+          <button type="button" id="remove-cancel" class="btn">Cancelar</button>
+          <button type="button" id="remove-confirm" class="btn danger">Remover</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="ui.js"></script>
+  </body>
+</html>

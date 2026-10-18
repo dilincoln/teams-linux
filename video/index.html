@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Teams para Linux — apresentação</title>
+    <script src="vendor/gsap.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="69.12" data-width="1920" data-height="1080">
+      <!-- Trilha: do vídeo do M-Atende (Mutual Tecnologia), 125 BPM; cortes em compassos de 1,92 s -->
+      <audio id="music" src="assets/music.m4a" data-start="0" data-duration="69.12" data-timeline-role="music" data-volume="0.85" data-fade-in="0.3" data-fade-out="3"></audio>
+
+      <!-- Fundo -->
+      <section id="bg" class="clip" data-start="0" data-duration="69.12" data-track-index="0">
+        <div id="blob-a" class="blob"></div>
+        <div id="blob-b" class="blob"></div>
+        <div id="grid"></div>
+      </section>
+
+      <!-- 1. Abertura -->
+      <section id="intro" class="clip center" data-start="0" data-duration="5.76" data-track-index="1">
+        <img id="intro-icon" src="assets/icon.png" alt="" />
+        <h1 id="intro-title">Teams para <span class="accent">Linux</span></h1>
+        <p id="intro-sub">Microsoft Teams com várias contas, notificações nativas<br />e avisos de reunião — num app de verdade.</p>
+        <div class="tags">
+          <span class="tag">Electron</span>
+          <span class="tag">Wayland</span>
+          <span class="tag">KDE Plasma</span>
+          <span class="tag">Arch / pacman</span>
+        </div>
+      </section>
+
+      <!-- 2. Problema -->
+      <section id="problem" class="clip center" data-start="5.76" data-duration="3.84" data-track-index="1">
+        <p id="pr-1" class="statement">Não existe Teams oficial para Linux.</p>
+        <p id="pr-2" class="statement muted">No navegador: uma conta por vez, e notificação quando dá.</p>
+        <p id="pr-3" class="statement accent">Então eu fiz o meu.</p>
+      </section>
+
+      <!-- 3–7. O app em uso -->
+      <section id="stage" class="clip" data-start="9.6" data-duration="32.64" data-track-index="1">
+        <div class="cap" id="cap-0">
+          <div class="num">O APP</div>
+          <h2>O Teams como app de verdade</h2>
+          <p>Janela própria, ícone na bandeja e integração com o KDE. Sem abas perdidas no navegador.</p>
+        </div>
+        <div class="cap" id="cap-1">
+          <div class="num">01 · MULTICONTA</div>
+          <h2>Várias contas, lado a lado</h2>
+          <p>Cada conta tem sessão, cookies e login isolados. Trocar é um clique no botão do canto.</p>
+        </div>
+        <div class="cap" id="cap-2">
+          <div class="num">02 · SINO</div>
+          <h2>Saiba o que chegou nas outras contas</h2>
+          <p>O sino acende com as não lidas das contas que não estão na tela, e a bandeja ganha um ponto vermelho.</p>
+        </div>
+        <div class="cap" id="cap-3">
+          <div class="num">03 · NOTIFICAÇÕES</div>
+          <h2>Notificações nativas, com som</h2>
+          <p>Direto no sistema, com o nome da conta. Lembretes repetem enquanto houver não lidas — e o clique abre a conta certa.</p>
+        </div>
+        <div class="cap" id="cap-4">
+          <div class="num">04 · AGENDA</div>
+          <h2>A próxima reunião sempre à vista</h2>
+          <p>Lida da agenda de todas as contas e mostrada no cabeçalho, com contagem regressiva.</p>
+        </div>
+
+        <!-- Janela do app -->
+        <div id="win">
+          <div class="titlebar">
+            <div class="sw" id="sw">
+              <span class="avatar sw-avatar">
+                <span id="sw-av-a" style="background: var(--contoso)">C</span>
+                <span id="sw-av-b" style="background: var(--fabrikam)">F</span>
+              </span>
+              <span class="sw-name"><span id="sw-name-a">Contoso</span><span id="sw-name-b">Fabrikam</span></span>
+              <span class="bell" id="bell">
+                <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 1.6a4 4 0 0 0-4 4v2.6l-1.2 2.2a.6.6 0 0 0 .5.9h9.4a.6.6 0 0 0 .5-.9L12 8.2V5.6a4 4 0 0 0-4-4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" /><path d="M6.3 13a1.8 1.8 0 0 0 3.4 0" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
+                <span class="badge" id="badge"><span id="badge-1">1</span><span id="badge-2">2</span></span>
+              </span>
+            </div>
+            <div class="search">
+              <svg viewBox="0 0 16 16" width="14" height="14"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.4" /></svg>
+              Pesquisar
+            </div>
+            <div class="nm" id="nm">
+              <span class="title">Daily Standup</span>
+              <span class="when"><span class="when-a" id="nm-a">em 12 min</span><span class="when-b" id="nm-b">em 5 min</span></span>
+            </div>
+            <div class="more">···</div>
+            <div class="me">MR</div>
+          </div>
+
+          <div class="rail">
+            <div class="rail-item">
+              <svg class="rail-icon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6zM10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+              Atividade
+            </div>
+            <div class="rail-item active">
+              <svg class="rail-icon" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+              Chat
+            </div>
+            <div class="rail-item">
+              <svg class="rail-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.6" /><circle cx="17" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M3 19c0-3.3 2.7-5 6-5s6 1.7 6 5M15 14.5c3 0 6 1.2 6 4.5" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
+              Equipes
+            </div>
+            <div class="rail-item">
+              <svg class="rail-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="1.6" /></svg>
+              Calendário
+            </div>
+            <div class="rail-item">
+              <svg class="rail-icon" viewBox="0 0 24 24"><path d="M6 4h3l2 5-2 1.5a11 11 0 0 0 4.5 4.5L15 13l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 4 6a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+              Chamadas
+            </div>
+          </div>
+
+          <!-- Conta A: Contoso -->
+          <div class="acct" id="acct-a">
+            <div class="list">
+              <div class="list-head">Chat <span style="color: #8f8f8f; font-size: 14px">⋯</span></div>
+              <div class="chips"><span class="chip on">Tudo</span><span class="chip">Não lidas</span><span class="chip">Reuniões</span></div>
+              <div class="item sel">
+                <span class="avatar" style="background: #c239b3">AS</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Ana Souza</span><span class="item-time">09:41</span></div><div class="item-msg">Pode revisar o PR #482 antes da daily?</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #038387">TP</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Time de Produto</span><span class="item-time">09:12</span></div><div class="item-msg">Bruno: deploy confirmado para 16h</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #5b5fc7">DS</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Daily Standup</span><span class="item-time">Ontem</span></div><div class="item-msg">Reunião · todos os dias às 10:00</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #ca5010">CM</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Carla Mendes</span><span class="item-time">Ontem</span></div><div class="item-msg">Valeu! Ficou ótimo o relatório</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #69797e">RC</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Rafael Costa</span><span class="item-time">Seg</span></div><div class="item-msg">Te mando o link da planilha já já</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #107c10">IN</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Infra &amp; DevOps</span><span class="item-time">Seg</span></div><div class="item-msg">Janela de manutenção sábado 22h</div></div>
+              </div>
+            </div>
+            <div class="pane">
+              <div class="pane-head"><span class="avatar" style="background: #c239b3">AS</span>Ana Souza<span class="tabs"><span class="on">Chat</span><span>Arquivos</span><span>Fotos</span></span></div>
+              <div class="msgs">
+                <div class="day">Hoje</div>
+                <div class="msg"><span class="who">Ana Souza · 09:38</span>Bom dia! Subi o PR da integração de pagamentos.</div>
+                <div class="msg mine">Bom dia! Vou dar uma olhada agora.</div>
+                <div class="msg"><span class="who">Ana Souza · 09:41</span>Pode revisar o PR #482 antes da daily?</div>
+              </div>
+              <div class="composer">Digite uma mensagem</div>
+            </div>
+          </div>
+
+          <!-- Conta B: Fabrikam -->
+          <div class="acct" id="acct-b">
+            <div class="list">
+              <div class="list-head">Chat <span style="color: #8f8f8f; font-size: 14px">⋯</span></div>
+              <div class="chips"><span class="chip on">Tudo</span><span class="chip">Não lidas</span><span class="chip">Reuniões</span></div>
+              <div class="item sel">
+                <span class="avatar" style="background: #0f6cbd">MA</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Marina Alves</span><span class="item-time">09:44</span></div><div class="item-msg">Fechamos o escopo da sprint!</div></div>
+              </div>
+              <div class="item unread">
+                <span class="avatar" style="background: #d13438">LP</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Lucas Pereira</span><span class="item-time">09:40</span></div><div class="item-msg">Consegue entrar na call agora?</div></div>
+              </div>
+              <div class="item unread">
+                <span class="avatar" style="background: #038387">S2</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Suporte N2</span><span class="item-time">09:31</span></div><div class="item-msg">Ticket #1934 resolvido</div></div>
+              </div>
+              <div class="item unread">
+                <span class="avatar" style="background: #8764b8">Q4</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Planejamento Q4</span><span class="item-time">09:02</span></div><div class="item-msg">Pauta atualizada para quinta</div></div>
+              </div>
+              <div class="item">
+                <span class="avatar" style="background: #ca5010">JR</span>
+                <div class="item-body"><div class="item-top"><span class="item-name">Júlia Rocha</span><span class="item-time">Ontem</span></div><div class="item-msg">Mandei a proposta revisada</div></div>
+              </div>
+            </div>
+            <div class="pane">
+              <div class="pane-head"><span class="avatar" style="background: #0f6cbd">MA</span>Marina Alves<span class="tabs"><span class="on">Chat</span><span>Arquivos</span></span></div>
+              <div class="msgs">
+                <div class="day">Hoje</div>
+                <div class="msg"><span class="who">Marina Alves · 09:43</span>Reunião ótima! Fechamos o escopo da sprint!</div>
+                <div class="msg mine">Perfeito. Já atualizo o board.</div>
+              </div>
+              <div class="composer">Digite uma mensagem</div>
+            </div>
+          </div>
+
+          <!-- Dropdown de contas -->
+          <div id="menu">
+            <div class="mi"><span class="check">✓</span><span class="dot" style="background: var(--contoso)"></span><span class="label">Contoso</span></div>
+            <div class="mi" id="mi-fabrikam"><span class="check"></span><span class="dot" style="background: var(--fabrikam)"></span><span class="label">Fabrikam</span><span class="count">3</span></div>
+            <div class="mi"><span class="check"></span><span class="dot" style="background: var(--personal)"></span><span class="label">Pessoal</span></div>
+            <div class="sep"></div>
+            <div class="mi"><span class="label">Adicionar conta…</span></div>
+            <div class="mi"><span class="label">Editar conta…</span></div>
+            <div class="mi"><span class="label">Recarregar</span></div>
+            <div class="sep"></div>
+            <div class="mi"><span class="label">Configurações…</span></div>
+            <div class="sep"></div>
+            <div class="mi danger"><span class="label">Remover conta…</span></div>
+          </div>
+        </div>
+
+        <!-- Lupas -->
+        <div class="callout" id="callout-sw">
+          <div class="inner">
+            <div class="sw" style="position: relative; left: 0; top: 0">
+              <span class="avatar" style="background: var(--fabrikam)">F</span>
+              <span style="flex: 1">Fabrikam</span>
+              <span class="bell" id="cbell">
+                <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 1.6a4 4 0 0 0-4 4v2.6l-1.2 2.2a.6.6 0 0 0 .5.9h9.4a.6.6 0 0 0 .5-.9L12 8.2V5.6a4 4 0 0 0-4-4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" /><path d="M6.3 13a1.8 1.8 0 0 0 3.4 0" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
+                <span class="badge" id="cbadge"><span id="cbadge-1">1</span><span id="cbadge-2">2</span></span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="callout" id="callout-nm">
+          <div class="inner">
+            <div class="nm">
+              <span class="title">Daily Standup</span>
+              <span class="when"><span class="when-a" id="cnm-a">em 12 min</span><span class="when-b" id="cnm-b">em 5 min</span></span>
+            </div>
+            <div class="more">···</div>
+            <div class="me">MR</div>
+          </div>
+        </div>
+
+        <!-- Notificações do sistema -->
+        <div class="notif" id="notif-1" style="bottom: 70px">
+          <div class="notif-head"><img src="assets/icon.png" alt="" />Teams · agora</div>
+          <div class="notif-title">Ana Souza · Contoso</div>
+          <div class="notif-body">Pode revisar o PR #482 antes da daily?</div>
+        </div>
+        <div class="notif" id="notif-2" style="bottom: 70px">
+          <div class="notif-head"><img src="assets/icon.png" alt="" />Teams · agora<span class="pill">LEMBRETE</span></div>
+          <div class="notif-title">2 mensagens não lidas · Contoso</div>
+          <div class="notif-body">Ana Souza: Pode revisar o PR #482 antes da daily?</div>
+        </div>
+        <div class="waves" id="waves" style="bottom: 96px">
+          <div class="w" id="w1"></div>
+          <div class="w" id="w2"></div>
+          <svg class="spk" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" /></svg>
+        </div>
+
+        <!-- Painel do KDE -->
+        <div id="panel">
+          <div class="panel-launcher"></div>
+          <div class="panel-task"><div class="ghost"></div></div>
+          <div class="panel-task"><div class="ghost"></div></div>
+          <div class="panel-task active"><img src="assets/icon.png" alt="" /></div>
+          <div class="panel-task"><div class="ghost"></div></div>
+          <div class="panel-spacer"></div>
+          <div class="tray">
+            <div class="tray-glyph"></div>
+            <div class="tray-glyph" style="border-radius: 50%"></div>
+            <div class="tray-teams"><img src="assets/icon.png" alt="" /><span id="tray-dot"></span></div>
+            <div class="clock">09:48<small>19/10</small></div>
+          </div>
+        </div>
+
+        <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5v17.2l4.6-4.3 2.9 6.6 3-1.3-2.9-6.5h6.2z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round" /></svg>
+        <div class="ring" id="ring"></div>
+      </section>
+
+      <!-- 5. Aviso em tela cheia -->
+      <section id="alert" class="clip center" data-start="42.24" data-duration="7.68" data-track-index="1">
+        <div id="alert-tag" class="eyebrow">05 · Aviso em tela cheia</div>
+        <div class="alert-when"><span id="aw-5">Começa em 5 min</span><span id="aw-4">Começa em 4 min</span></div>
+        <h1 id="alert-title">Daily Standup</h1>
+        <div class="alert-meta" id="alert-meta">
+          <span>10:00 – 10:15</span>
+          <span class="acc"><span class="dot" style="background: var(--contoso)"></span>Contoso</span>
+        </div>
+        <div class="alert-actions">
+          <div class="abtn primary" id="btn-join">Entrar</div>
+          <div class="abtn" id="btn-snooze">Lembrar na hora</div>
+          <div class="abtn" id="btn-dismiss">Dispensar</div>
+        </div>
+        <div class="alert-hint" id="alert-hint">Configurável: na hora, 1, 2, 5, 10, 15 ou 30 min antes</div>
+        <svg id="cursor2" class="cursor2" viewBox="0 0 24 24" style="position: absolute; left: 0; top: 0; width: 40px; height: 40px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))"><path d="M4 2.5v17.2l4.6-4.3 2.9 6.6 3-1.3-2.9-6.5h6.2z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round" /></svg>
+      </section>
+
+      <!-- 6. Carregamento -->
+      <section id="loading" class="clip" data-start="49.92" data-duration="5.76" data-track-index="1">
+        <div class="cap" id="cap-6">
+          <div class="num">06 · ABERTURA</div>
+          <h2>Nenhuma conta dormindo</h2>
+          <p>Na abertura, cada conta carrega por inteiro — inclusive as que ficam em segundo plano. Nada de notificação perdida.</p>
+        </div>
+        <div class="card" id="loading-card">
+          <h3>Carregando contas…</h3>
+          <p class="lead">Cada conta precisa abrir uma vez para receber notificações em segundo plano.</p>
+          <div class="lrow">
+            <span class="dot" style="background: var(--contoso)"></span><span class="name">Contoso</span>
+            <div class="status"><div class="st-load" id="l1-load"><span class="spinner" id="sp1"></span>Carregando…</div><div class="st-done" id="l1-done">✓ Pronta</div></div>
+          </div>
+          <div class="lrow">
+            <span class="dot" style="background: var(--fabrikam)"></span><span class="name">Fabrikam</span>
+            <div class="status"><div class="st-load" id="l2-load"><span class="spinner" id="sp2"></span>Carregando…</div><div class="st-done" id="l2-done">✓ Pronta</div></div>
+          </div>
+          <div class="lrow">
+            <span class="dot" style="background: var(--personal)"></span><span class="name">Pessoal</span>
+            <div class="status"><div class="st-queue" id="l3-queue">Na fila</div><div class="st-load" id="l3-load"><span class="spinner" id="sp3"></span>Carregando…</div><div class="st-done" id="l3-done">✓ Pronta</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Configurações e extras -->
+      <section id="settings" class="clip" data-start="55.68" data-duration="7.68" data-track-index="1">
+        <div class="cap" id="cap-7" style="top: 170px">
+          <div class="num">07 · DO SEU JEITO</div>
+          <h2>Configurações e detalhes</h2>
+          <p>Intervalo dos lembretes, som das notificações e antecedência do aviso de reunião.</p>
+        </div>
+        <div class="feature-list" id="features">
+          <div class="feat"><span class="tick">✓</span>Chamadas e compartilhamento de tela</div>
+          <div class="feat"><span class="tick">✓</span>Ícone na bandeja com contador de não lidas</div>
+          <div class="feat"><span class="tick">✓</span>Downloads direto na pasta, com aviso</div>
+          <div class="feat"><span class="tick">✓</span>Pacote pacman com atalho e ícone</div>
+        </div>
+        <div class="card" id="settings-card">
+          <h3>Configurações</h3>
+          <div class="field" style="margin-top: 22px">
+            <div class="lbl">Lembrete de não lidas (segundos)</div>
+            <div class="input">120</div>
+            <div class="hint">Repete a notificação enquanto houver mensagens não lidas.</div>
+          </div>
+          <div class="check-row"><span class="box">✓</span>Tocar som nas notificações</div>
+          <div class="field">
+            <div class="lbl">Som</div>
+            <div class="row"><div class="input">Mensagem (Ocean)</div><div class="ghost-btn">Ouvir</div></div>
+          </div>
+          <div class="field">
+            <div class="lbl">Aviso em tela cheia antes das reuniões</div>
+            <div class="row"><div class="input" id="alert-select"><span id="as-5">5 min antes</span><span id="as-10">10 min antes</span></div><div class="ghost-btn">Testar</div></div>
+          </div>
+          <div class="check-row"><span class="box">✓</span>Mostrar a próxima reunião no cabeçalho</div>
+          <div class="card-actions"><div class="ghost-btn">Cancelar</div><div class="ghost-btn primary">Salvar</div></div>
+        </div>
+      </section>
+
+      <!-- 8. Encerramento -->
+      <section id="outro" class="clip center" data-start="63.36" data-duration="5.76" data-track-index="1">
+        <img id="outro-icon" src="assets/icon.png" alt="" />
+        <h1 id="outro-title">Teams para Linux</h1>
+        <div id="outro-url">github.com/dilincoln/teams-linux</div>
+        <div id="outro-sub">Código aberto · Electron · feito para o KDE Plasma</div>
+      </section>
+    </div>
+
+    <script>
+      // Timeline única do vídeo. Tempos em segundos, alinhados à música (125 BPM: batida de
+      // 0,48 s, compasso de 1,92 s). Estados iniciais com set() em 0 e mudanças com to(), para
+      // que qualquer quadro possa ser buscado diretamente (renderização determinística).
+      const tl = gsap.timeline({ paused: true });
+      const E = "power3.out";
+
+      // Ponta do cursor (SVG de 34 px): desloca para que a ponta caia no ponto pedido.
+      const cur = (x, y) => ({ x: x - 6, y: y - 4 });
+      const ring = (x, y) => ({ x, y });
+
+      function click(sel, ringSel, x, y, at) {
+        tl.to(sel, { scale: 0.85, duration: 0.08, transformOrigin: "15% 10%" }, at);
+        tl.to(sel, { scale: 1, duration: 0.12 }, at + 0.08);
+        tl.set(ringSel, { ...ring(x, y), scale: 0.4, opacity: 1 }, at);
+        tl.to(ringSel, { scale: 1.4, opacity: 0, duration: 0.45, ease: "power2.out" }, at);
+      }
+
+      // ---------------------------------------------------------------- estados iniciais
+      tl.set(["#intro-icon", "#intro-title", "#intro-sub", ".tags .tag"], { opacity: 0 }, 0);
+      tl.set(["#pr-1", "#pr-2", "#pr-3"], { opacity: 0 }, 0);
+      tl.set(["#cap-0", "#cap-1", "#cap-2", "#cap-3", "#cap-4"], { opacity: 0, y: 24 }, 0);
+      tl.set("#win", { opacity: 0, y: 70, scale: 0.97 }, 0);
+      tl.set("#panel", { y: 60 }, 0);
+      tl.set(["#acct-b", "#sw-av-b", "#sw-name-b", "#menu", "#badge", "#badge-2", "#nm-b"], { opacity: 0 }, 0);
+      tl.set("#menu", { scale: 0.96, y: -6 }, 0);
+      tl.set(["#callout-sw", "#callout-nm"], { opacity: 0, scale: 0.9, y: 16 }, 0);
+      tl.set(["#cbadge", "#cbadge-2", "#cnm-b"], { opacity: 0 }, 0);
+      tl.set("#tray-dot", { scale: 0 }, 0);
+      tl.set(["#notif-1", "#notif-2"], { x: 470, opacity: 0 }, 0);
+      tl.set("#waves", { opacity: 0 }, 0);
+      tl.set(["#cursor", "#ring"], { opacity: 0 }, 0);
+      tl.set(["#alert-tag", ".alert-when", "#alert-title", "#alert-meta", ".abtn", "#alert-hint", "#aw-4", "#cursor2"], { opacity: 0 }, 0);
+      tl.set(["#cap-6", "#loading-card", "#l1-done", "#l2-done", "#l3-load", "#l3-done"], { opacity: 0 }, 0);
+      tl.set(["#cap-7", "#settings-card", ".feat", "#as-10"], { opacity: 0 }, 0);
+      tl.set(["#outro-icon", "#outro-title", "#outro-url", "#outro-sub"], { opacity: 0 }, 0);
+
+      // ---------------------------------------------------------------- fundo vivo
+      tl.fromTo("#blob-a", { x: 0, y: 0 }, { x: 420, y: 260, duration: 69.12, ease: "sine.inOut" }, 0);
+      tl.fromTo("#blob-b", { x: 0, y: 0 }, { x: -380, y: -220, duration: 69.12, ease: "sine.inOut" }, 0);
+
+      // ---------------------------------------------------------------- 1. abertura (0–5,76)
+      tl.fromTo("#intro-icon", { opacity: 0, scale: 0.55, rotate: -8 }, { opacity: 1, scale: 1, rotate: 0, duration: 0.9, ease: "back.out(1.6)" }, 0.2);
+      tl.fromTo("#intro-title", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.8, ease: E }, 0.96);
+      tl.fromTo("#intro-sub", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 1.44);
+      tl.fromTo(".tags .tag", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: E, stagger: 0.12 }, 2.4);
+      tl.to("#intro", { opacity: 0, y: -40, duration: 0.45, ease: "power2.in" }, 5.3);
+
+      // ---------------------------------------------------------------- 2. problema (5,76–9,6)
+      tl.fromTo("#pr-1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 5.9);
+      tl.fromTo("#pr-2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 6.72);
+      tl.fromTo("#pr-3", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(2)" }, 7.68);
+      tl.to("#problem", { opacity: 0, scale: 1.04, duration: 0.4, ease: "power2.in" }, 9.15);
+
+      // ---------------------------------------------------------------- 3. o app (9,6–15,36)
+      tl.to("#panel", { y: 0, duration: 0.6, ease: E }, 9.6);
+      tl.to("#win", { opacity: 1, y: 0, scale: 1, duration: 1, ease: E }, 9.75);
+      tl.to("#cap-0", { opacity: 1, y: 0, duration: 0.6, ease: E }, 10.2);
+      tl.to("#cap-0", { opacity: 0, y: -20, duration: 0.35 }, 15.0);
+
+      // ---------------------------------------------------------------- 4. multiconta (15,36–23,04)
+      tl.to("#cap-1", { opacity: 1, y: 0, duration: 0.6, ease: E }, 15.36);
+      tl.set("#cursor", cur(1000, 640), 15.5);
+      tl.to("#cursor", { opacity: 1, duration: 0.25 }, 15.5);
+      tl.to("#cursor", { ...cur(624, 132), duration: 0.9, ease: "power2.inOut" }, 15.75);
+      tl.set("#sw", { attr: { class: "sw hover" } }, 16.5);
+      click("#cursor", "#ring", 624, 132, 16.8);
+      tl.to("#menu", { opacity: 1, scale: 1, y: 0, duration: 0.22, ease: E }, 16.9);
+      tl.to("#cursor", { ...cur(664, 214), duration: 0.6, ease: "power2.inOut" }, 17.5);
+      tl.set("#mi-fabrikam", { attr: { class: "mi hl" } }, 18.0);
+      click("#cursor", "#ring", 664, 214, 18.72);
+      tl.to("#menu", { opacity: 0, scale: 0.97, duration: 0.15 }, 18.8);
+      tl.set("#sw", { attr: { class: "sw" } }, 18.8);
+      tl.to(["#acct-b", "#sw-av-b", "#sw-name-b"], { opacity: 1, duration: 0.35 }, 18.86);
+      tl.to(["#acct-a", "#sw-av-a", "#sw-name-a"], { opacity: 0, duration: 0.35 }, 18.86);
+      tl.to("#cursor", { ...cur(1150, 760), opacity: 0, duration: 0.9, ease: "power2.in" }, 19.8);
+      tl.to("#cap-1", { opacity: 0, y: -20, duration: 0.35 }, 22.7);
+
+      // ---------------------------------------------------------------- 5. sino (23,04–28,8)
+      tl.to("#cap-2", { opacity: 1, y: 0, duration: 0.6, ease: E }, 23.04);
+      tl.to("#callout-sw", { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.6)" }, 23.3);
+      // Mensagem chega na Contoso (conta fora da tela)
+      tl.to(["#badge", "#cbadge"], { opacity: 1, duration: 0.01 }, 24.0);
+      tl.fromTo(["#badge", "#cbadge"], { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(3)", immediateRender: false }, 24.0);
+      tl.to(["#bell", "#cbell"], { opacity: 1, duration: 0.2 }, 24.0);
+      tl.to("#tray-dot", { scale: 1, duration: 0.35, ease: "back.out(3)" }, 24.0);
+      tl.to(["#badge-2", "#cbadge-2"], { opacity: 1, duration: 0.15 }, 25.44);
+      tl.to(["#badge-1", "#cbadge-1"], { opacity: 0, duration: 0.15 }, 25.44);
+      tl.fromTo(["#badge", "#cbadge"], { scale: 1.35 }, { scale: 1, duration: 0.35, ease: "back.out(3)", immediateRender: false }, 25.44);
+      tl.to("#callout-sw", { opacity: 0, scale: 0.95, duration: 0.35 }, 28.1);
+      tl.to("#cap-2", { opacity: 0, y: -20, duration: 0.35 }, 28.45);
+
+      // ---------------------------------------------------------------- 6. notificações (28,8–36,48)
+      tl.to("#cap-3", { opacity: 1, y: 0, duration: 0.6, ease: E }, 28.8);
+      tl.to("#notif-1", { x: 0, opacity: 1, duration: 0.5, ease: E }, 29.28);
+      function waves(at) {
+        tl.to("#waves", { opacity: 1, duration: 0.15 }, at);
+        tl.fromTo("#w1", { scale: 0.5, opacity: 1 }, { scale: 1.6, opacity: 0, duration: 0.9, ease: "power2.out", immediateRender: false }, at);
+        tl.fromTo("#w2", { scale: 0.5, opacity: 1 }, { scale: 1.6, opacity: 0, duration: 0.9, ease: "power2.out", immediateRender: false }, at + 0.35);
+        tl.to("#waves", { opacity: 0, duration: 0.3 }, at + 1.2);
+      }
+      waves(29.4);
+      // Lembrete: a notificação nova entra embaixo e empurra a anterior para cima
+      tl.to("#notif-1", { y: -132, duration: 0.4, ease: E }, 32.64);
+      tl.to("#notif-2", { x: 0, opacity: 1, duration: 0.5, ease: E }, 32.64);
+      waves(32.76);
+      tl.set("#cursor", cur(1250, 720), 33.9);
+      tl.to("#cursor", { opacity: 1, duration: 0.25 }, 33.9);
+      tl.to("#cursor", { ...cur(1680, 955), duration: 0.75, ease: "power2.inOut" }, 34.1);
+      click("#cursor", "#ring", 1680, 955, 34.9);
+      tl.to(["#notif-2", "#notif-1"], { opacity: 0, x: 60, duration: 0.3, stagger: 0.08 }, 35.0);
+      tl.to(["#acct-a", "#sw-av-a", "#sw-name-a"], { opacity: 1, duration: 0.35 }, 35.1);
+      tl.to(["#acct-b", "#sw-av-b", "#sw-name-b"], { opacity: 0, duration: 0.35 }, 35.1);
+      tl.to("#badge", { opacity: 0, scale: 0, duration: 0.25 }, 35.1);
+      tl.to("#bell", { opacity: 0.6, duration: 0.25 }, 35.1);
+      tl.to("#tray-dot", { scale: 0, duration: 0.25 }, 35.1);
+      tl.to("#cursor", { opacity: 0, duration: 0.4 }, 35.7);
+      tl.to("#cap-3", { opacity: 0, y: -20, duration: 0.35 }, 36.13);
+
+      // ---------------------------------------------------------------- 7. próxima reunião (36,48–42,24)
+      tl.to("#cap-4", { opacity: 1, y: 0, duration: 0.6, ease: E }, 36.48);
+      tl.to("#callout-nm", { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.6)" }, 36.8);
+      tl.to(["#nm-a", "#cnm-a"], { opacity: 0, y: -8, duration: 0.25 }, 38.4);
+      tl.fromTo(["#nm-b", "#cnm-b"], { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: E, immediateRender: false }, 38.45);
+      tl.to("#callout-nm", { opacity: 0, scale: 0.95, duration: 0.35 }, 41.5);
+      tl.to("#cap-4", { opacity: 0, y: -20, duration: 0.35 }, 41.6);
+      tl.to("#stage", { opacity: 0, duration: 0.3 }, 41.95);
+
+      // ---------------------------------------------------------------- 8. aviso em tela cheia (42,24–49,92)
+      tl.fromTo("#alert", { opacity: 0, scale: 1.05 }, { opacity: 1, scale: 1, duration: 0.5, ease: E }, 42.24);
+      tl.to(".alert-when", { opacity: 1, duration: 0.4 }, 42.5);
+      tl.to("#aw-5", { opacity: 1, duration: 0.01 }, 42.5);
+      tl.fromTo("#alert-title", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 42.72);
+      tl.fromTo("#alert-meta", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: E }, 43.0);
+      tl.fromTo(".abtn", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: E, stagger: 0.1 }, 43.2);
+      tl.to("#alert-tag", { opacity: 1, duration: 0.4 }, 43.68);
+      tl.to("#alert-hint", { opacity: 1, duration: 0.4 }, 44.16);
+      tl.to("#aw-5", { opacity: 0, y: -10, duration: 0.25 }, 46.08);
+      tl.fromTo("#aw-4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, immediateRender: false }, 46.12);
+      tl.set("#cursor2", { x: 1180, y: 900 }, 46.6);
+      tl.to("#cursor2", { opacity: 1, duration: 0.25 }, 46.6);
+      tl.to("#cursor2", { x: 712, y: 650, duration: 0.8, ease: "power2.inOut" }, 46.8);
+      tl.to("#btn-join", { scale: 0.94, duration: 0.08 }, 47.8);
+      tl.to("#btn-join", { scale: 1, duration: 0.14 }, 47.88);
+      tl.to("#alert", { opacity: 0, duration: 0.5, ease: "power2.in" }, 49.3);
+
+      // ---------------------------------------------------------------- 9. carregamento (49,92–55,68)
+      tl.fromTo("#cap-6", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 49.92);
+      tl.fromTo("#loading-card", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 50.1);
+      tl.fromTo(["#sp1", "#sp2", "#sp3"], { rotate: 0 }, { rotate: 360 * 6, duration: 5.4, ease: "none" }, 50.1);
+      tl.to("#l1-load", { opacity: 0, duration: 0.2 }, 51.36);
+      tl.to("#l1-done", { opacity: 1, duration: 0.25 }, 51.4);
+      tl.to("#l2-load", { opacity: 0, duration: 0.2 }, 52.8);
+      tl.to("#l2-done", { opacity: 1, duration: 0.25 }, 52.84);
+      tl.to("#l3-queue", { opacity: 0, duration: 0.2 }, 52.8);
+      tl.to("#l3-load", { opacity: 1, duration: 0.2 }, 52.84);
+      tl.to("#l3-load", { opacity: 0, duration: 0.2 }, 54.24);
+      tl.to("#l3-done", { opacity: 1, duration: 0.25 }, 54.28);
+      tl.to(["#cap-6", "#loading-card"], { opacity: 0, duration: 0.35 }, 55.3);
+
+      // ---------------------------------------------------------------- 10. configurações (55,68–63,36)
+      tl.fromTo("#cap-7", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 55.68);
+      tl.fromTo("#settings-card", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 55.9);
+      tl.to("#as-5", { opacity: 0, duration: 0.2 }, 57.6);
+      tl.to("#as-10", { opacity: 1, duration: 0.25 }, 57.64);
+      tl.fromTo("#alert-select", { boxShadow: "0 0 0 0 rgba(127,133,245,0)" }, { boxShadow: "0 0 0 4px rgba(127,133,245,0.55)", duration: 0.25, yoyo: true, repeat: 1 }, 57.6);
+      tl.fromTo(".feat", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: E, stagger: 0.48 }, 59.04);
+      tl.to(["#cap-7", "#settings-card", "#features"], { opacity: 0, duration: 0.4 }, 62.9);
+
+      // ---------------------------------------------------------------- 11. encerramento (63,36–69,12)
+      tl.fromTo("#outro-icon", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.6)" }, 63.5);
+      tl.fromTo("#outro-title", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7, ease: E }, 63.84);
+      tl.fromTo("#outro-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: E }, 64.8);
+      tl.fromTo("#outro-sub", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 65.28);
+      tl.to("#outro", { opacity: 0, duration: 1.2, ease: "power1.in" }, 67.9);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines.main = tl;
+    </script>
+  </body>
+</html>

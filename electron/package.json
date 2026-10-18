@@ -1,0 +1,72 @@
+{
+  "name": "teams-linux",
+  "productName": "Teams",
+  "version": "0.2.0",
+  "description": "Microsoft Teams (web) para Linux com múltiplas contas",
+  "homepage": "https://teams.microsoft.com",
+  "desktopName": "teams-linux.desktop",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "./node_modules/electron/dist/electron .",
+    "build": "electron-builder --linux pacman"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  },
+  "author": {
+    "name": "Diego",
+    "email": "diego@mutualtecnologia.com.br"
+  },
+  "build": {
+    "appId": "br.com.diego.teams-linux",
+    "productName": "Teams",
+    "files": [
+      "main.js",
+      "preload-*.cjs",
+      "ui/**",
+      "assets/**",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "linux": {
+      "target": [
+        "pacman"
+      ],
+      "executableName": "teams-linux",
+      "icon": "assets/icons",
+      "category": "Network",
+      "synopsis": "Microsoft Teams (web) com múltiplas contas",
+      "desktop": {
+        "entry": {
+          "Name": "Teams",
+          "GenericName": "Microsoft Teams",
+          "Comment": "Microsoft Teams (web) com múltiplas contas",
+          "StartupWMClass": "teams-linux",
+          "Categories": "Network;InstantMessaging;Chat;",
+          "Icon": "/opt/Teams/resources/teams-linux.png"
+        }
+      }
+    },
+    "pacman": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "alsa-lib",
+        "libnotify",
+        "libxss",
+        "mesa"
+      ]
+    },
+    "extraResources": [
+      {
+        "from": "assets/icons/512x512.png",
+        "to": "teams-linux.png"
+      }
+    ]
+  }
+}
