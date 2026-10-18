@@ -1,9 +1,9 @@
 {
   "name": "teams-linux",
   "productName": "Teams",
-  "version": "0.2.1",
-  "description": "Microsoft Teams (web) para Linux com múltiplas contas",
-  "homepage": "https://teams.microsoft.com",
+  "version": "0.3.0",
+  "description": "Microsoft Teams (web) for Linux with multiple accounts",
+  "homepage": "https://github.com/dilincoln/teams-linux",
   "desktopName": "teams-linux.desktop",
   "private": true,
   "type": "module",
@@ -40,12 +40,12 @@
       "executableName": "teams-linux",
       "icon": "assets/icons",
       "category": "Network",
-      "synopsis": "Microsoft Teams (web) com múltiplas contas",
+      "synopsis": "Microsoft Teams (web) with multiple accounts",
       "desktop": {
         "entry": {
           "Name": "Teams",
           "GenericName": "Microsoft Teams",
-          "Comment": "Microsoft Teams (web) com múltiplas contas",
+          "Comment": "Microsoft Teams (web) with multiple accounts",
           "StartupWMClass": "teams-linux",
           "Categories": "Network;InstantMessaging;Chat;",
           "Icon": "/opt/Teams/resources/teams-linux.png"

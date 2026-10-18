@@ -36,7 +36,7 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  /* Transparente: com o dropdown aberto, a página do Teams continua visível atrás. */
+  /* Transparent: with the dropdown open, the Teams page stays visible behind it. */
   background: transparent;
   color: var(--text);
   font: 13px/1.4 "Segoe UI", system-ui, -apple-system, "Noto Sans", sans-serif;
@@ -48,7 +48,7 @@ button {
   color: inherit;
 }
 
-/* ---- Dropdown de contas ---- */
+/* ---- Account dropdown ---- */
 
 .dot {
   width: 10px;
@@ -83,7 +83,7 @@ button {
   display: none;
 }
 
-/* Logo abaixo do botão de contas no canto da página do Teams. */
+/* Right below the account button in the corner of the Teams page. */
 #menu {
   position: absolute;
   top: 48px;
@@ -147,7 +147,7 @@ button {
   background: var(--border);
 }
 
-/* ---- Diálogos (a página cobre a janela enquanto um estiver aberto) ---- */
+/* ---- Dialogs (the page covers the window while one is open) ---- */
 
 #overlay,
 #loading {
@@ -408,7 +408,7 @@ select:disabled + .btn {
   color: #fff;
 }
 
-/* As configurações cresceram: em janelas baixas o cartão rola. */
+/* Settings grew: in short windows the card scrolls. */
 #settings-card {
   max-height: calc(100vh - 48px);
   overflow-y: auto;

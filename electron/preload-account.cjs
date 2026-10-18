@@ -1,5 +1,5 @@
-// Preload das páginas do Teams (sandbox + contextIsolation).
-// Expõe à página só o pedido de notificação; o clique volta por postMessage.
+// Preload for the Teams pages (sandbox + contextIsolation).
+// Exposes only the notification request to the page; clicks come back via postMessage.
 const { contextBridge, ipcRenderer } = require("electron");
 
 const CLICK_MESSAGE = "teams-linux:notification-click";
@@ -16,8 +16,8 @@ contextBridge.exposeInMainWorld("__teamsLinux", {
   notify: (id, title, body) => ipcRenderer.send("notify", { id, title: String(title), body: String(body) }),
 });
 
-// Botão de contas fixo no canto superior esquerdo, no lugar do lançador de apps e do
-// botão de recolher a barra do Teams (o CSS que os esconde vem do processo principal).
+// Account button pinned to the top-left corner, in place of Teams' app launcher and sidebar
+// toggle (the CSS that hides them comes from the main process).
 const TEAMS_HOSTS = /(^|\.)(teams\.microsoft\.com|teams\.cloud\.microsoft|teams\.live\.com)$/;
 let switcherState = null; // { name, color, others }
 let switcher = null;
@@ -34,11 +34,11 @@ function buildSwitcher() {
   root.setAttribute("role", "button");
   root.setAttribute("aria-haspopup", "menu");
   root.tabIndex = 0;
-  root.title = "Trocar de conta";
+  root.title = "Switch account";
 
   const avatar = el("span", "tls-avatar");
   avatar.append(el("span", "tls-initial"));
-  // Sino com as não lidas das outras contas (a da conta aberta o Teams já mostra).
+  // Bell with the other accounts' unread count (Teams already shows the open account's).
   const bell = el("span", "tls-bell");
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 16 16");
@@ -76,8 +76,8 @@ function renderSwitcher() {
   badge.hidden = others === 0;
   badge.textContent = others > 99 ? "99+" : String(others);
   switcher.querySelector(".tls-bell").classList.toggle("tls-active", others > 0);
-  switcher.title = others > 0 ? `Trocar de conta — ${others} não lida(s) em outras contas` : "Trocar de conta";
-  // Mesma cor de texto dos botões do cabeçalho do Teams (acompanha o tema claro/escuro).
+  switcher.title = others > 0 ? `Switch account — ${others} unread in other accounts` : "Switch account";
+  // Same text color as the Teams header buttons (follows the light/dark theme).
   const reference = document.querySelector('[data-tid="waffle-open-button"]');
   if (reference) switcher.style.color = getComputedStyle(reference).color;
 }
@@ -85,7 +85,7 @@ function renderSwitcher() {
 function mountSwitcher() {
   if (!TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
   switcher ??= buildSwitcher();
-  // Fora do <body>, para o React do Teams não remover.
+  // Outside <body>, so Teams' React doesn't remove it.
   if (!switcher.isConnected) document.documentElement.append(switcher);
   renderSwitcher();
 }
@@ -99,10 +99,10 @@ window.addEventListener("DOMContentLoaded", () => {
   setInterval(mountSwitcher, 3000);
 });
 
-// Avisa o processo principal quando o Teams terminou de carregar (as contas são abertas
-// uma a uma na inicialização). Fora do Teams (login) não há o que esperar.
-// A barra de navegação só existe com o app montado; o marcador de "tudo renderizado" nem
-// sempre aparece quando a conta carrega atrás de outra.
+// Tells the main process when Teams has finished loading (accounts are opened one by one
+// at startup). Outside Teams (sign-in) there is nothing to wait for.
+// The navigation bar only exists once the app is mounted; the "all rendered" marker doesn't
+// always show up when the account loads behind another one.
 const TEAMS_READY_SELECTOR = '[data-tid="all-phased-rendering-complete"], [data-tid="app-layout-area--nav"]';
 window.addEventListener("DOMContentLoaded", () => {
   if (!TEAMS_HOSTS.test(location.hostname)) {
@@ -116,10 +116,10 @@ window.addEventListener("DOMContentLoaded", () => {
   }, 500);
 });
 
-// ---- Agenda: próximas reuniões pelo Microsoft Graph ----
-// Usa o token de agenda que o próprio Teams guarda (cache do MSAL no localStorage); o
-// Teams o renova sozinho. Os eventos vão para o processo principal, que junta as contas,
-// mostra a próxima reunião e dispara o aviso em tela cheia.
+// ---- Calendar: upcoming meetings from Microsoft Graph ----
+// Uses the calendar token Teams itself keeps (MSAL cache in localStorage); Teams renews it
+// on its own. Events go to the main process, which merges the accounts, shows the next
+// meeting and fires the fullscreen alert.
 const CALENDAR_EVERY = 5 * 60_000;
 const CALENDAR_RETRY = 60_000;
 
@@ -144,7 +144,7 @@ function calendarToken() {
   return best?.secret ?? null;
 }
 
-// O Graph devolve "2026-10-19T13:00:00.0000000" (UTC, com 7 casas decimais).
+// Graph returns "2026-10-19T13:00:00.0000000" (UTC, with 7 decimal places).
 const graphTime = (value) => Date.parse(`${String(value).slice(0, 19)}Z`);
 
 async function fetchCalendar() {
@@ -168,7 +168,7 @@ async function fetchCalendar() {
       .filter((e) => !e.isAllDay && !e.isCancelled && e.responseStatus?.response !== "declined")
       .map((e) => ({
         id: e.id,
-        subject: e.subject || "(sem título)",
+        subject: e.subject || "(no title)",
         start: graphTime(e.start.dateTime),
         end: graphTime(e.end.dateTime),
         joinUrl: e.onlineMeeting?.joinUrl || null,
@@ -190,22 +190,22 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 ipcRenderer.on("calendar-refresh", () => fetchCalendar());
 
-// ---- Próxima reunião no cabeçalho, à esquerda dos botões do canto direito do Teams ----
+// ---- Next meeting in the header, left of the Teams buttons in the top-right corner ----
 const NEXT_MEETING_GAP = 8;
-let nextMeeting = null; // { subject, start, end, color, account } (de todas as contas)
+let nextMeeting = null; // { subject, start, end, color, account } (from all accounts)
 let nextMeetingEl = null;
 
 function relativeTime(start, end) {
   const now = Date.now();
-  if (now >= start) return now < end ? "agora" : null;
+  if (now >= start) return now < end ? "now" : null;
   const minutes = Math.ceil((start - now) / 60000);
-  if (minutes < 60) return `em ${minutes} min`;
+  if (minutes < 60) return `in ${minutes} min`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m ? `em ${h} h ${m} min` : `em ${h} h`;
+  return m ? `in ${h} h ${m} min` : `in ${h} h`;
 }
 
-const clock = (ms) => new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const clock = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 function renderNextMeeting() {
   if (!TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
@@ -221,14 +221,14 @@ function renderNextMeeting() {
   if (!when) return;
   const { subject, start, end, color, account } = nextMeeting;
   const dot = nextMeetingEl.querySelector(".tlm-dot");
-  dot.hidden = !account; // só com mais de uma conta
+  dot.hidden = !account; // only with more than one account
   dot.style.background = color || "";
   nextMeetingEl.querySelector(".tlm-title").textContent = subject;
   nextMeetingEl.querySelector(".tlm-when").textContent = when;
   nextMeetingEl.title = `${clock(start)}–${clock(end)}${account ? ` · ${account}` : ""}`;
   const minutes = (start - Date.now()) / 60000;
-  nextMeetingEl.classList.toggle("tlm-now", when === "agora");
-  nextMeetingEl.classList.toggle("tlm-soon", when !== "agora" && minutes <= 10);
+  nextMeetingEl.classList.toggle("tlm-now", when === "now");
+  nextMeetingEl.classList.toggle("tlm-soon", when !== "now" && minutes <= 10);
 
   const corner = document.querySelector('[data-tid="more-options-header"]');
   const right = corner ? window.innerWidth - corner.getBoundingClientRect().left + NEXT_MEETING_GAP : NEXT_MEETING_GAP;
@@ -243,8 +243,8 @@ ipcRenderer.on("next-meeting", (_event, meeting) => {
 window.addEventListener("DOMContentLoaded", () => setInterval(renderNextMeeting, 15_000));
 window.addEventListener("resize", () => renderNextMeeting());
 
-// Substitui window.Notification (sempre com permissão concedida) por uma versão que
-// passa pelo processo principal, para o clique abrir a janela na conta certa.
+// Replaces window.Notification (permission always granted) with a version that goes through
+// the main process, so a click opens the window on the right account.
 contextBridge.executeInMainWorld({
   args: [CLICK_MESSAGE, KEEP_ACTIVE_MESSAGE],
   func: (clickMessage, keepActiveMessage) => {
@@ -284,9 +284,9 @@ contextBridge.executeInMainWorld({
       }
     }
 
-    // "Manter ativo": a página se diz sempre visível (janela escondida ou conta em segundo
-    // plano não contam como inatividade). O foco continua real, porque é por ele que o
-    // Teams decide mostrar notificação.
+    // "Keep active": the page always reports itself visible (a hidden window or a background
+    // account doesn't count as inactivity). Focus stays real, because Teams uses it to decide
+    // whether to show a notification.
     let keepActive = false;
     const hidden = Object.getOwnPropertyDescriptor(Document.prototype, "hidden");
     const visibilityState = Object.getOwnPropertyDescriptor(Document.prototype, "visibilityState");

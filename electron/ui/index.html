@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'" />
@@ -7,125 +7,125 @@
     <link rel="stylesheet" href="ui.css" />
   </head>
   <body>
-    <!-- Aberto, o dropdown faz a view cobrir a janela; clicar fora fecha. -->
+    <!-- While open, the dropdown makes the view cover the window; clicking outside closes it. -->
     <div id="menu-backdrop" hidden>
-      <div id="menu" role="menu" aria-label="Contas"></div>
+      <div id="menu" role="menu" aria-label="Accounts"></div>
     </div>
 
     <main id="loading" hidden>
       <div class="card">
-        <h1>Carregando contas…</h1>
-        <p class="muted">Cada conta precisa abrir uma vez para receber notificações em segundo plano.</p>
+        <h1>Loading accounts…</h1>
+        <p class="muted">Each account has to open once to get notifications in the background.</p>
         <ul id="loading-list" class="loading-list"></ul>
         <div class="actions">
-          <button type="button" id="loading-skip" class="btn">Pular</button>
+          <button type="button" id="loading-skip" class="btn">Skip</button>
         </div>
       </div>
     </main>
 
     <main id="overlay" hidden>
       <form id="account-form" class="card" hidden>
-        <h1 id="form-title">Adicionar conta</h1>
+        <h1 id="form-title">Add account</h1>
         <p id="form-intro" class="muted" hidden>
-          Cada conta roda isolada, com sua própria sessão. Depois de adicionar, faça login normalmente.
+          Each account runs isolated, with its own session. After adding it, sign in as usual.
         </p>
 
         <label class="field">
-          <span>Nome</span>
-          <input id="name" name="name" required maxlength="40" placeholder="Ex.: Trabalho, Cliente X" autocomplete="off" />
+          <span>Name</span>
+          <input id="name" name="name" required maxlength="40" placeholder="e.g. Work, Client X" autocomplete="off" />
         </label>
 
         <fieldset class="field" id="kind-field">
-          <legend>Tipo de conta</legend>
+          <legend>Account type</legend>
           <div class="segmented">
-            <label><input type="radio" name="kind" value="work" checked /><span>Trabalho ou escola</span></label>
-            <label><input type="radio" name="kind" value="personal" /><span>Pessoal</span></label>
+            <label><input type="radio" name="kind" value="work" checked /><span>Work or school</span></label>
+            <label><input type="radio" name="kind" value="personal" /><span>Personal</span></label>
           </div>
         </fieldset>
 
         <fieldset class="field">
-          <legend>Cor</legend>
+          <legend>Color</legend>
           <div id="colors" class="colors"></div>
         </fieldset>
 
         <div class="actions">
-          <button type="button" id="cancel" class="btn">Cancelar</button>
-          <button type="submit" id="submit" class="btn primary">Adicionar</button>
+          <button type="button" id="cancel" class="btn">Cancel</button>
+          <button type="submit" id="submit" class="btn primary">Add</button>
         </div>
       </form>
 
       <form id="settings-card" class="card" hidden>
-        <h1>Configurações</h1>
+        <h1>Settings</h1>
 
         <label class="field">
-          <span>Lembrete de não lidas (segundos)</span>
+          <span>Unread reminder (seconds)</span>
           <input id="reminder-seconds" type="number" min="0" step="1" inputmode="numeric" />
-          <small class="hint">Repete a notificação enquanto houver mensagens não lidas. 0 desliga; o mínimo é 10.</small>
+          <small class="hint">Repeats the notification while there are unread messages. 0 turns it off; the minimum is 10.</small>
         </label>
 
         <label class="check-field">
           <input id="sound" type="checkbox" />
           <span>
-            Tocar som nas notificações
-            <small class="hint">Vale também para os lembretes de não lidas.</small>
+            Play a sound with notifications
+            <small class="hint">Also applies to unread reminders.</small>
           </span>
         </label>
 
         <div class="field">
-          <span>Som</span>
+          <span>Sound</span>
           <div class="sound-row">
-            <select id="sound-name" aria-label="Som"></select>
-            <button type="button" id="sound-preview" class="btn">Ouvir</button>
+            <select id="sound-name" aria-label="Sound"></select>
+            <button type="button" id="sound-preview" class="btn">Play</button>
           </div>
         </div>
 
         <div class="field">
-          <span>Aviso em tela cheia antes das reuniões</span>
+          <span>Fullscreen alert before meetings</span>
           <div class="sound-row">
-            <select id="meeting-alert" aria-label="Aviso em tela cheia">
-              <option value="off">Desligado</option>
-              <option value="0">Na hora</option>
-              <option value="1">1 min antes</option>
-              <option value="2">2 min antes</option>
-              <option value="5">5 min antes</option>
-              <option value="10">10 min antes</option>
-              <option value="15">15 min antes</option>
-              <option value="30">30 min antes</option>
+            <select id="meeting-alert" aria-label="Fullscreen alert">
+              <option value="off">Off</option>
+              <option value="0">When it starts</option>
+              <option value="1">1 min before</option>
+              <option value="2">2 min before</option>
+              <option value="5">5 min before</option>
+              <option value="10">10 min before</option>
+              <option value="15">15 min before</option>
+              <option value="30">30 min before</option>
             </select>
-            <button type="button" id="meeting-alert-test" class="btn">Testar</button>
+            <button type="button" id="meeting-alert-test" class="btn">Test</button>
           </div>
         </div>
 
         <label class="check-field">
           <input id="show-next-meeting" type="checkbox" />
           <span>
-            Mostrar a próxima reunião no cabeçalho
-            <small class="hint">Ex.: "Daily em 12 min", ao lado dos botões do canto direito do Teams.</small>
+            Show the next meeting in the header
+            <small class="hint">e.g. "Daily in 12 min", next to the Teams buttons in the top-right corner.</small>
           </span>
         </label>
 
         <label class="check-field">
           <input id="keep-active" type="checkbox" />
           <span>
-            Não deixar o Teams ficar Ausente
-            <small class="hint">Mantém o status Disponível mesmo com a janela escondida ou sem uso.</small>
+            Keep Teams from going Away
+            <small class="hint">Keeps your status Available even when the window is hidden or idle.</small>
           </span>
         </label>
 
         <div class="actions">
-          <button type="button" id="settings-cancel" class="btn">Cancelar</button>
-          <button type="submit" class="btn primary">Salvar</button>
+          <button type="button" id="settings-cancel" class="btn">Cancel</button>
+          <button type="submit" class="btn primary">Save</button>
         </div>
       </form>
 
       <div id="remove-card" class="card" hidden>
-        <h1>Remover conta?</h1>
+        <h1>Remove account?</h1>
         <p class="muted">
-          A conta <strong id="remove-name"></strong> sai do app e a sessão e os dados locais dela são apagados.
+          <strong id="remove-name"></strong> is removed from the app and its session and local data are deleted.
         </p>
         <div class="actions">
-          <button type="button" id="remove-cancel" class="btn">Cancelar</button>
-          <button type="button" id="remove-confirm" class="btn danger">Remover</button>
+          <button type="button" id="remove-cancel" class="btn">Cancel</button>
+          <button type="button" id="remove-confirm" class="btn danger">Remove</button>
         </div>
       </div>
     </main>

@@ -1,4 +1,4 @@
-// Preload do dropdown de contas e dos diálogos (página local).
+// Preload for the account dropdown and the dialogs (local page).
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("teams", {

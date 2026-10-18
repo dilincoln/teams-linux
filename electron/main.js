@@ -25,9 +25,9 @@ const KIND_URL = {
   personal: "https://teams.live.com/v2/",
 };
 
-// Esconde o lançador de apps e o botão de recolher a barra do Teams; no lugar deles fica
-// o botão de contas que o preload põe na página (e, à direita, a próxima reunião). A janela não tem moldura, então o
-// cabeçalho do Teams vira a área de arrastar (menos o que é clicável).
+// Hides Teams' app launcher and sidebar toggle; the preload puts the account button in their
+// place (and the next meeting on the right). The window is frameless, so the Teams header
+// becomes the drag area (except for what is clickable).
 const PAGE_CSS = `
 [data-tid="waffle-open-button"], [data-tid="hamburger-button"] { visibility: hidden !important; }
 [data-tid="title-bar"] { -webkit-app-region: drag; }
@@ -70,7 +70,7 @@ const PAGE_CSS = `
 #teams-linux-next-meeting.tlm-now .tlm-when { color: #ff6b6b; opacity: 1; font-weight: 600; }
 `;
 
-// Popups que podem abrir dentro do app (login etc.); o resto vai para o navegador.
+// Popups allowed to open inside the app (sign-in etc.); everything else goes to the browser.
 const IN_APP_HOSTS = [
   "login.microsoftonline.com",
   "login.microsoft.com",
@@ -89,33 +89,33 @@ if (!app.requestSingleInstanceLock()) {
 const startHidden = process.argv.includes("--minimized") || process.argv.includes("--hidden");
 
 // ---------------------------------------------------------------------------
-// Configuração
+// Config
 // ---------------------------------------------------------------------------
 
 const configPath = () => path.join(app.getPath("userData"), "config.json");
 
 const DEFAULT_SETTINGS = {
-  reminderSeconds: 0, // repetir notificação de não lidas a cada N segundos (0 = desligado)
-  keepActive: false, // impedir que o Teams fique "Ausente" por inatividade
-  sound: true, // tocar som nas notificações (o KDE não toca para apps sem .notifyrc)
+  reminderSeconds: 0, // repeat the unread notification every N seconds (0 = off)
+  keepActive: false, // keep Teams from switching to "Away" when idle
+  sound: true, // play a sound with notifications (KDE plays none for apps without a .notifyrc)
   soundName: "ocean/message-new-instant",
-  meetingAlert: 5, // aviso em tela cheia N minutos antes da reunião (null = desligado)
-  showNextMeeting: true, // próxima reunião no cabeçalho do Teams
+  meetingAlert: 5, // fullscreen alert N minutes before a meeting (null = off)
+  showNextMeeting: true, // next meeting in the Teams header
 };
 const MEETING_ALERT_OPTIONS = [null, 0, 1, 2, 5, 10, 15, 30];
 
-// Sons do sistema oferecidos nas configurações: "tema/nome" em /usr/share/sounds/<tema>/stereo.
+// System sounds offered in the settings: "theme/name" in /usr/share/sounds/<theme>/stereo.
 const SOUNDS = [
-  ["ocean/message-new-instant", "Mensagem (Ocean)"],
-  ["ocean/message-contact-in", "Contato (Ocean)"],
-  ["ocean/message-attention", "Atenção (Ocean)"],
-  ["ocean/message-highlight", "Destaque (Ocean)"],
-  ["ocean/message-new-email", "E-mail (Ocean)"],
-  ["ocean/bell", "Sino (Ocean)"],
-  ["freedesktop/message-new-instant", "Mensagem (Freedesktop)"],
-  ["freedesktop/message", "Aviso (Freedesktop)"],
-  ["freedesktop/bell", "Sino (Freedesktop)"],
-  ["freedesktop/complete", "Concluído (Freedesktop)"],
+  ["ocean/message-new-instant", "Message (Ocean)"],
+  ["ocean/message-contact-in", "Contact (Ocean)"],
+  ["ocean/message-attention", "Attention (Ocean)"],
+  ["ocean/message-highlight", "Highlight (Ocean)"],
+  ["ocean/message-new-email", "Email (Ocean)"],
+  ["ocean/bell", "Bell (Ocean)"],
+  ["freedesktop/message-new-instant", "Message (Freedesktop)"],
+  ["freedesktop/message", "Notice (Freedesktop)"],
+  ["freedesktop/bell", "Bell (Freedesktop)"],
+  ["freedesktop/complete", "Complete (Freedesktop)"],
 ]
   .map(([id, label]) => {
     const [theme, name] = id.split("/");
@@ -141,37 +141,37 @@ function saveConfig() {
 const newId = () => Date.now().toString(16) + Math.random().toString(16).slice(2, 6);
 const partitionOf = (id) => `persist:account-${id}`;
 
-/** O Teams põe a contagem de não lidas no título: "(3) Chat | Microsoft Teams". */
+/** Teams puts the unread count in the title: "(3) Chat | Microsoft Teams". */
 const parseUnread = (title) => {
   const m = /^\s*\((\d+)\+?\)/.exec(title || "");
   return m ? Number(m[1]) : 0;
 };
 
 // ---------------------------------------------------------------------------
-// Estado
+// State
 // ---------------------------------------------------------------------------
 
 let config;
 let win;
-let ui; // WebContentsView local: dropdown de contas + diálogos
+let ui; // local WebContentsView: account dropdown + dialogs
 let tray;
-const views = new Map(); // id da conta -> WebContentsView
+const views = new Map(); // account id -> WebContentsView
 const unread = new Map();
 let dialogOpen = false;
-let menuOpen = false; // dropdown de contas aberto: a view local cobre a janela (transparente)
+let menuOpen = false; // account dropdown open: the local view covers the window (transparent)
 let quitting = false;
-let hideAfterLoading = startHidden; // aberto com --minimized: mostra só o carregamento
+let hideAfterLoading = startHidden; // started with --minimized: only the loading screen shows
 
-// Conta escondida não renderiza e o Teams dela fica parado na tela de abertura (sem
-// notificações). Por isso cada conta é "aquecida": fica visível, atrás da tela de
-// carregamento ou da conta ativa, até o Teams terminar de carregar. Uma por vez.
+// A hidden account doesn't render, so its Teams stalls on the splash screen (and sends no
+// notifications). That's why each account is "warmed up": it stays visible, behind the
+// loading screen or the active account, until Teams finishes loading. One at a time.
 const READY_TIMEOUT = 60_000;
-let loading = false; // tela de carregamento da abertura
-const ready = new Set(); // contas com o Teams carregado
-const timedOut = new Set(); // contas que não terminaram dentro do limite
+let loading = false; // startup loading screen
+const ready = new Set(); // accounts whose Teams has loaded
+const timedOut = new Set(); // accounts that didn't finish within the limit
 const readyWaiters = new Map(); // id -> [resolve]
 const warmQueue = [];
-let warming = null; // conta visível atrás da ativa enquanto carrega
+let warming = null; // account visible behind the active one while it loads
 let warmRunning = false;
 
 const account = (id) => config.accounts.find((a) => a.id === id);
@@ -193,7 +193,7 @@ function emitState() {
   for (const id of views.keys()) sendSwitcherState(id);
 }
 
-/** Estado do botão de contas dentro da página: conta da view e não lidas das outras. */
+/** State of the in-page account button: the view's account and the other accounts' unread. */
 function sendSwitcherState(id) {
   const acct = account(id);
   if (!acct) return;
@@ -211,14 +211,14 @@ function layout() {
   for (const view of views.values()) view.setBounds({ x: 0, y: 0, width, height });
 
   ui.setBounds({ x: 0, y: 0, width, height });
-  // Fora do carregamento, do dropdown e dos diálogos a view local sai de cima da página.
+  // Outside loading, the dropdown and dialogs, the local view gets out of the page's way.
   ui.setVisible(loading || dialogOpen || menuOpen || config.accounts.length === 0);
 }
 
 function applyVisibility() {
   const showing = dialogOpen ? null : config.active;
   for (const [id, view] of views) view.setVisible(id === showing || id === warming);
-  // A conta aquecendo fica atrás da ativa, e a view local sempre por cima de todas.
+  // The warming account stays behind the active one, and the local view always on top.
   if (warming && showing && warming !== showing && views.has(showing)) {
     win.contentView.addChildView(views.get(showing));
     win.contentView.addChildView(ui);
@@ -228,7 +228,7 @@ function applyVisibility() {
 }
 
 // ---------------------------------------------------------------------------
-// Carregamento das contas
+// Account loading
 // ---------------------------------------------------------------------------
 
 function markReady(id) {
@@ -277,7 +277,7 @@ async function runWarmQueue() {
   emitState();
 }
 
-/** Abertura: aquece as outras contas e por último a ativa (que já carrega junto, por baixo). */
+/** Startup: warm up the other accounts, then the active one (which loads underneath meanwhile). */
 function startLoading() {
   if (!config.accounts.length) return;
   loading = true;
@@ -302,14 +302,14 @@ function refreshIndicators() {
   const title = `${total > 0 ? `(${total}) ` : ""}Teams${name ? ` — ${name}` : ""}`;
   win?.setTitle(title);
   if (tray) {
-    tray.setToolTip(total > 0 ? `Teams — ${total} não lida(s)` : "Teams");
+    tray.setToolTip(total > 0 ? `Teams — ${total} unread` : "Teams");
     tray.setImage(total > 0 ? badgedIcon() : trayIcon());
   }
   app.setBadgeCount(total);
 }
 
 // ---------------------------------------------------------------------------
-// Ícones da bandeja
+// Tray icons
 // ---------------------------------------------------------------------------
 
 let trayIconCache;
@@ -320,7 +320,7 @@ function trayIcon() {
   return trayIconCache;
 }
 
-/** Ícone com um ponto vermelho no canto superior direito. */
+/** Icon with a red dot in the top-right corner. */
 function badgedIcon() {
   if (badgedIconCache) return badgedIconCache;
   const base = trayIcon();
@@ -345,11 +345,11 @@ function badgedIcon() {
 }
 
 // ---------------------------------------------------------------------------
-// Contas
+// Accounts
 // ---------------------------------------------------------------------------
 
 function chromeUserAgent(ua) {
-  // Sem "Electron/x" e o nome do app, o Teams trata como Chrome comum.
+  // Without "Electron/x" and the app name, Teams treats it as regular Chrome.
   return ua.replace(/\s(Electron|teams-linux|Teams)\/\S+/g, "");
 }
 
@@ -363,7 +363,7 @@ function setupSession(ses) {
   ses.setPermissionRequestHandler((_wc, permission, callback) => callback(allowed.has(permission)));
   ses.setPermissionCheckHandler((_wc, permission) => allowed.has(permission));
 
-  // Compartilhamento de tela: no Wayland o getSources abre o seletor do sistema (portal).
+  // Screen sharing: on Wayland, getSources opens the system picker (portal).
   ses.setDisplayMediaRequestHandler(
     (_request, callback) => {
       desktopCapturer
@@ -378,7 +378,7 @@ function setupSession(ses) {
     item.setSavePath(uniquePath(path.join(app.getPath("downloads"), item.getFilename())));
     item.once("done", (_e, state) => {
       new Notification({
-        title: state === "completed" ? "Download concluído" : "Falha no download",
+        title: state === "completed" ? "Download complete" : "Download failed",
         body: path.basename(item.getSavePath()),
         icon: ICON,
       }).show();
@@ -415,9 +415,9 @@ function createAccountView(acct) {
       preload: path.join(here, "preload-account.cjs"),
       contextIsolation: true,
       sandbox: true,
-      // As páginas da Microsoft pedem Segoe UI/Helvetica; sem elas o padrão é serifado.
+      // Microsoft's pages ask for Segoe UI/Helvetica; without them the default is a serif font.
       defaultFontFamily: { standard: "Noto Sans", sansSerif: "Noto Sans" },
-      // Contas em segundo plano sem throttling, para notificações e presença em dia.
+      // No throttling for background accounts, so notifications and presence stay current.
       backgroundThrottling: false,
     },
   });
@@ -430,7 +430,7 @@ function createAccountView(acct) {
     wc.send("keep-active", config.settings.keepActive);
     wc.send("next-meeting", lastNextMeeting);
   });
-  // Página nova (recarga, redirecionamento): o Teams dela precisa carregar de novo.
+  // New page (reload, redirect): its Teams has to load again.
   wc.on("did-start-navigation", (details) => {
     if (!details.isMainFrame || details.isSameDocument) return;
     ready.delete(acct.id);
@@ -445,7 +445,7 @@ function createAccountView(acct) {
 
   view.setVisible(false);
   win.contentView.addChildView(view);
-  // O dropdown/diálogos precisam continuar por cima das contas.
+  // The dropdown/dialogs must stay above the accounts.
   win.contentView.addChildView(ui);
   views.set(acct.id, view);
   return view;
@@ -490,7 +490,7 @@ function accountAction(action) {
 }
 
 // ---------------------------------------------------------------------------
-// IPC do dropdown/diálogos (só o webview local tem esse preload)
+// Dropdown/dialog IPC (only the local webview has this preload)
 // ---------------------------------------------------------------------------
 
 function fromUi(event) {
@@ -499,7 +499,7 @@ function fromUi(event) {
 
 ipcMain.handle("get-state", (e) => (fromUi(e) ? snapshot() : null));
 
-// Clique no botão de contas dentro da página: abre o dropdown ancorado à esquerda.
+// Click on the in-page account button: opens the dropdown anchored to the left.
 ipcMain.on("open-accounts-menu", (e) => {
   if (dialogOpen || ![...views.values()].some((v) => v.webContents === e.sender)) return;
   ui.webContents.send("open-menu");
@@ -512,14 +512,14 @@ ipcMain.on("dialog-open", (e, open) => {
   if (open) ui.webContents.focus();
 });
 
-// O preload avisa quando o Teams da conta terminou de carregar.
+// The preload reports when the account's Teams has finished loading.
 ipcMain.on("account-ready", (e) => {
   const entry = [...views].find(([, v]) => v.webContents === e.sender);
   if (entry) markReady(entry[0]);
 });
 
 ipcMain.on("skip-loading", (e) => {
-  // As contas que faltam continuam carregando atrás da ativa.
+  // The remaining accounts keep loading behind the active one.
   if (fromUi(e)) finishLoading();
 });
 
@@ -578,7 +578,7 @@ ipcMain.handle("remove-account", async (e, id) => {
   readyWaiters.delete(id);
   if (config.active === id) config.active = config.accounts[0]?.id ?? null;
   saveConfig();
-  // Apaga cookies, cache e armazenamento da conta.
+  // Wipe the account's cookies, cache and storage.
   const ses = session.fromPartition(partitionOf(id));
   await ses.clearStorageData().catch(() => {});
   await ses.clearCache().catch(() => {});
@@ -587,13 +587,13 @@ ipcMain.handle("remove-account", async (e, id) => {
   refreshIndicators();
 });
 
-// Notificações das contas (o preload substitui window.Notification da página).
-const liveNotifications = new Set(); // sem referência, o clique pode se perder no GC
-const lastNotification = new Map(); // id da conta -> { title, body } (para os lembretes)
+// Account notifications (the preload replaces the page's window.Notification).
+const liveNotifications = new Set(); // without a reference, the click can be lost to GC
+const lastNotification = new Map(); // account id -> { title, body } (for reminders)
 
 let lastSoundAt = 0;
 
-/** Toca um som do sistema; várias notificações juntas soam uma vez só. */
+/** Plays a system sound; several notifications at once sound only once. */
 function playSound(id = config.settings.soundName, { force = false } = {}) {
   const sound = SOUNDS.find((s) => s.id === id) ?? SOUNDS[0];
   if (!sound || (!force && Date.now() - lastSoundAt < 1000)) return;
@@ -631,28 +631,28 @@ ipcMain.on("notify", (e, { id: notificationId, title, body }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Configurações
+// Settings
 // ---------------------------------------------------------------------------
 
 const KEEP_ACTIVE_EVERY = 60_000;
 let reminderTimer = null;
 let keepActiveTimer = null;
 
-/** Enquanto houver não lidas, repete a notificação (menos da conta que está na tela). */
+/** While there are unread messages, repeat the notification (except for the account on screen). */
 function remindUnread() {
   const looking = win?.isVisible() && win.isFocused();
   for (const acct of config.accounts) {
     const count = unread.get(acct.id) ?? 0;
     if (count === 0 || (looking && acct.id === config.active)) continue;
     const last = lastNotification.get(acct.id);
-    const title = count === 1 ? "1 mensagem não lida" : `${count} mensagens não lidas`;
-    showNotification(acct.id, title, last ? `${last.title}: ${last.body}` : "Você tem mensagens não lidas no Teams");
+    const title = count === 1 ? "1 unread message" : `${count} unread messages`;
+    showNotification(acct.id, title, last ? `${last.title}: ${last.body}` : "You have unread messages in Teams");
   }
 }
 
 /**
- * Movimento de mouse real (do navegador, não sintético) no cabeçalho de cada conta: o
- * Teams conta como atividade e não muda o status para Ausente.
+ * Real (browser-level, not synthetic) mouse movement over each account's header: Teams
+ * counts it as activity and doesn't switch the status to Away.
  */
 function nudgeAccounts() {
   for (const view of views.values()) {
@@ -692,12 +692,12 @@ ipcMain.handle("update-settings", (e, settings) => {
 });
 
 // ---------------------------------------------------------------------------
-// Reuniões: próxima no cabeçalho e aviso em tela cheia
+// Meetings: next one in the header and fullscreen alert
 // ---------------------------------------------------------------------------
 
-const calendars = new Map(); // id da conta -> eventos do Graph (vindos do preload)
-const alerted = new Set(); // reuniões já avisadas ("conta:id:início")
-const snoozed = new Map(); // reunião -> horário para avisar de novo
+const calendars = new Map(); // account id -> Graph events (from the preload)
+const alerted = new Set(); // meetings already alerted ("account:id:start")
+const snoozed = new Map(); // meeting -> time to alert again
 let lastNextMeeting = null;
 let alertWin = null;
 let currentAlert = null;
@@ -720,7 +720,7 @@ ipcMain.on("calendar-events", (e, events) => {
   refreshMeetings();
 });
 
-/** Reuniões de todas as contas que ainda não terminaram, da mais próxima para a mais distante. */
+/** Meetings from all accounts that haven't ended yet, soonest first. */
 function upcomingMeetings() {
   const now = Date.now();
   const all = [];
@@ -745,7 +745,7 @@ function describe(meeting) {
 
 function refreshMeetings(force = false) {
   const now = Date.now();
-  // Já começou há mais de 10 min: o cabeçalho passa para a seguinte.
+  // Started more than 10 min ago: the header moves on to the next one.
   const next = upcomingMeetings().find((m) => m.start > now - 10 * 60_000);
   const shown = config.settings.showNextMeeting && next ? describe(next) : null;
   if (force || JSON.stringify(shown) !== JSON.stringify(lastNextMeeting)) {
@@ -762,7 +762,7 @@ function checkMeetingAlerts() {
   for (const meeting of upcomingMeetings()) {
     const key = meetingKey(meeting);
     const due = snoozed.get(key) ?? (alerted.has(key) ? Infinity : meeting.start - lead * 60_000);
-    // Reunião que já começou há mais de 2 min (ex.: ao abrir o app) não gera aviso.
+    // A meeting that started more than 2 min ago (e.g. when the app opens) gets no alert.
     if (now < due || now > meeting.start + 2 * 60_000) continue;
     alerted.add(key);
     snoozed.delete(key);
@@ -788,7 +788,7 @@ function showMeetingAlert(meeting) {
     skipTaskbar: true,
     show: false,
     icon: ICON,
-    title: "Reunião — Teams",
+    title: "Meeting — Teams",
     backgroundColor: "#0d0d12",
     webPreferences: {
       preload: path.join(here, "preload-alert.cjs"),
@@ -822,20 +822,20 @@ ipcMain.on("alert-action", (e, action) => {
   }
 });
 
-// Pelas configurações: avisa a próxima reunião agora, para ver como fica.
+// From the settings: alert the next meeting right now, to preview it.
 ipcMain.on("test-meeting-alert", (e) => {
   if (!fromUi(e)) return;
   const now = Date.now();
   const next = upcomingMeetings().find((m) => m.start > now);
   showMeetingAlert(
-    next ?? { id: "teste", accountId: config.active, subject: "Reunião de exemplo", start: now + 5 * 60_000, end: now + 35 * 60_000, joinUrl: null },
+    next ?? { id: "test", accountId: config.active, subject: "Sample meeting", start: now + 5 * 60_000, end: now + 35 * 60_000, joinUrl: null },
   );
 });
 
 setInterval(refreshMeetings, 15_000);
 
 // ---------------------------------------------------------------------------
-// Janela, bandeja e ciclo de vida
+// Window, tray and lifecycle
 // ---------------------------------------------------------------------------
 
 function createWindow() {
@@ -876,7 +876,7 @@ function createWindow() {
   win.on("maximize", () => { layout(); persistBounds(); });
   win.on("unmaximize", () => { layout(); persistBounds(); });
   win.on("close", (event) => {
-    // Fechar só esconde: as contas continuam rodando para notificar.
+    // Closing only hides: the accounts keep running so they can notify.
     if (!quitting && tray) {
       event.preventDefault();
       win.hide();
@@ -886,7 +886,7 @@ function createWindow() {
   applyVisibility();
   refreshIndicators();
   startLoading();
-  // Mesmo com --minimized a janela aparece durante o carregamento: conta escondida não carrega.
+  // Even with --minimized the window shows while loading: a hidden account doesn't load.
   if (!startHidden || loading) win.show();
 }
 
@@ -895,9 +895,9 @@ function createTray() {
   tray.setToolTip("Teams");
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: "Mostrar Teams", click: showWindow },
+      { label: "Show Teams", click: showWindow },
       { type: "separator" },
-      { label: "Sair", click: () => { quitting = true; app.quit(); } },
+      { label: "Quit", click: () => { quitting = true; app.quit(); } },
     ]),
   );
   tray.on("click", () => (win.isVisible() && win.isFocused() ? win.hide() : showWindow()));
@@ -916,7 +916,7 @@ app.whenReady().then(() => {
   try {
     createTray();
   } catch (err) {
-    console.error("bandeja indisponível:", err);
+    console.error("tray unavailable:", err);
     tray = null;
   }
 });

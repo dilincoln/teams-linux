@@ -11,7 +11,7 @@ let state = { accounts: [], active: null, unread: {}, settings: {}, sounds: [] }
 let dialog = null;
 let selectedColor = COLORS[0];
 
-// ---- Dropdown de contas (aberto pelo botão no canto da página do Teams) ----
+// ---- Account dropdown (opened by the button in the corner of the Teams page) ----
 
 const menuBackdrop = $("#menu-backdrop");
 const menu = $("#menu");
@@ -70,14 +70,14 @@ function renderMenu() {
   );
   if (items.length) items.push(separator());
   items.push(
-    menuItem({ label: "Adicionar conta…", onSelect: () => openDialog({ mode: "add" }) }),
-    menuItem({ label: "Editar conta…", disabled: !active, onSelect: () => openDialog({ mode: "edit", id: active }) }),
-    menuItem({ label: "Recarregar", disabled: !active, onSelect: () => window.teams.accountAction("reload") }),
-    menuItem({ label: "Ferramentas de desenvolvedor", disabled: !active, onSelect: () => window.teams.accountAction("devtools") }),
+    menuItem({ label: "Add account…", onSelect: () => openDialog({ mode: "add" }) }),
+    menuItem({ label: "Edit account…", disabled: !active, onSelect: () => openDialog({ mode: "edit", id: active }) }),
+    menuItem({ label: "Reload", disabled: !active, onSelect: () => window.teams.accountAction("reload") }),
+    menuItem({ label: "Developer tools", disabled: !active, onSelect: () => window.teams.accountAction("devtools") }),
     separator(),
-    menuItem({ label: "Configurações…", onSelect: () => openDialog({ mode: "settings" }) }),
+    menuItem({ label: "Settings…", onSelect: () => openDialog({ mode: "settings" }) }),
     separator(),
-    menuItem({ label: "Remover conta…", danger: true, disabled: !active, onSelect: () => openDialog({ mode: "remove", id: active }) }),
+    menuItem({ label: "Remove account…", danger: true, disabled: !active, onSelect: () => openDialog({ mode: "remove", id: active }) }),
   );
   menu.replaceChildren(...items);
 }
@@ -97,7 +97,7 @@ function closeMenu() {
   window.teams.setMenuOpen(false);
 }
 
-// O fundo cobre a janela inteira (inclusive o botão de contas): clicar nele fecha.
+// The backdrop covers the whole window (account button included): clicking it closes.
 menuBackdrop.addEventListener("mousedown", (e) => {
   if (e.target === menuBackdrop) closeMenu();
 });
@@ -111,7 +111,7 @@ menu.addEventListener("keydown", (e) => {
   items[next]?.focus();
 });
 
-// ---- Diálogos ----
+// ---- Dialogs ----
 
 function renderColors() {
   $("#colors").replaceChildren(
@@ -160,10 +160,10 @@ function openDialog(next) {
     $("#remove-name").textContent = account?.name ?? "";
   } else {
     const editing = next.mode === "edit";
-    $("#form-title").textContent = editing ? "Editar conta" : firstRun ? "Bem-vindo ao Teams" : "Adicionar conta";
+    $("#form-title").textContent = editing ? "Edit account" : firstRun ? "Welcome to Teams" : "Add account";
     $("#form-intro").hidden = editing;
     $("#kind-field").hidden = editing;
-    $("#submit").textContent = editing ? "Salvar" : "Adicionar";
+    $("#submit").textContent = editing ? "Save" : "Add";
     $("#cancel").hidden = firstRun;
     $("#name").value = editing ? account?.name ?? "" : "";
     form.elements.kind.value = "work";
@@ -192,7 +192,7 @@ form.addEventListener("submit", async (e) => {
     await window.teams.updateAccount({ id: dialog.id, name, color: selectedColor });
     closeDialog();
   } else {
-    // add-account já fecha o diálogo no processo principal e ativa a conta nova.
+    // add-account already closes the dialog in the main process and activates the new account.
     await window.teams.addAccount({ name, color: selectedColor, kind: form.elements.kind.value });
     dialog = null;
     overlay.hidden = true;
@@ -239,7 +239,7 @@ document.addEventListener("keydown", (e) => {
   else closeDialog();
 });
 
-// ---- Carregamento das contas na abertura ----
+// ---- Account loading at startup ----
 
 function renderLoading() {
   const { ready, timedOut, current } = state.loading;
@@ -256,17 +256,17 @@ function renderLoading() {
       status.className = "status";
       if (ready.includes(a.id)) {
         status.classList.add("done");
-        status.textContent = "✓ Pronta";
+        status.textContent = "✓ Ready";
       } else if (timedOut.includes(a.id)) {
         status.classList.add("failed");
-        status.textContent = "Não respondeu";
+        status.textContent = "No response";
       } else if (a.id === current || a.id === state.active) {
-        // A ativa carrega desde o início, por baixo desta tela.
+        // The active one loads from the start, underneath this screen.
         const spinner = document.createElement("span");
         spinner.className = "spinner";
-        status.append(spinner, "Carregando…");
+        status.append(spinner, "Loading…");
       } else {
-        status.textContent = "Na fila";
+        status.textContent = "Queued";
       }
       li.append(dot, name, status);
       return li;
@@ -276,13 +276,13 @@ function renderLoading() {
 
 $("#loading-skip").addEventListener("click", () => window.teams.skipLoading());
 
-// ---- Estado ----
+// ---- State ----
 
 function render() {
   $("#loading").hidden = !state.loading;
   if (state.loading) renderLoading();
   if (menuOpen) renderMenu();
-  // Sem contas não há o que mostrar: abre direto o cadastro.
+  // No accounts means nothing to show: open the add dialog right away.
   if (state.accounts.length === 0 && !dialog) openDialog({ mode: "add" });
 }
 

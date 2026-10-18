@@ -1,135 +1,137 @@
 <div align="center">
 
-<img src="electron/assets/icons/256x256.png" width="112" alt="Ícone do Teams para Linux" />
+<img src="electron/assets/icons/256x256.png" width="112" alt="Teams for Linux icon" />
 
-# Teams para Linux
+# Teams for Linux
 
-**Microsoft Teams com várias contas, notificações nativas e avisos de reunião — num app de verdade para Linux.**
+**Microsoft Teams with multiple accounts, native notifications and meeting alerts — in a real Linux desktop app.**
 
 Electron · Wayland · KDE Plasma · Arch / pacman
 
-[![Vídeo de apresentação](docs/poster.jpg)](docs/teams-linux.mp4)
+</div>
 
-<sub>▶ Clique na imagem para ver o vídeo de apresentação (1 min).</sub>
+<div align="center">
+
+[![Showcase video](docs/poster.jpg)](docs/teams-linux.mp4)
 
 </div>
 
 ---
 
-## Por quê
+## Why
 
-A Microsoft não tem um cliente do Teams para Linux. No navegador dá para usar, mas é uma conta por vez, a aba se perde entre as outras e as notificações aparecem quando querem. Quem trabalha com mais de um tenant (cliente, empresa, conta pessoal) acaba alternando entre perfis do navegador o dia inteiro.
+Microsoft doesn't ship a Teams client for Linux. The web version works in a browser, but only one account at a time, the tab gets lost among the others and notifications show up whenever they feel like it. If you work across more than one tenant (a client, your company, a personal account), you end up juggling browser profiles all day.
 
-Este app resolve isso: cada conta vive isolada dentro de uma única janela, com troca em um clique, notificações do sistema e a agenda à vista.
+This app fixes that: every account lives isolated inside a single window, one click away, with system notifications and your calendar in sight.
 
-## Funcionalidades
+## Features
 
 | | |
 |---|---|
-| **Várias contas, isoladas** | Cada conta tem sessão, cookies e login próprios (`persist:account-<id>`). Contas de trabalho/escola e pessoais. |
-| **Botão de contas no canto** | Fica no lugar do lançador de apps do Teams. Mostra a conta ativa e um sino com as não lidas das *outras* contas. |
-| **Notificações nativas, com som** | Vão direto para o sistema (libnotify/KDE), com o nome da conta. Clicar abre a janela na conta e na conversa certas. |
-| **Lembretes de não lidas** | Opcional: repete a notificação a cada N segundos enquanto houver mensagens não lidas. |
-| **Próxima reunião no cabeçalho** | "Daily Standup em 12 min", lido da agenda de todas as contas, com destaque quando está perto. |
-| **Aviso em tela cheia** | Antes de cada reunião (na hora, 1, 2, 5, 10, 15 ou 30 min antes), com *Entrar*, *Lembrar na hora* e *Dispensar*. Inspirado no [Dato](https://sindresorhus.com/dato). |
-| **Nenhuma conta dormindo** | Na abertura, cada conta carrega por inteiro, inclusive as que ficam em segundo plano — senão o Teams delas não termina de iniciar e as notificações não chegam. |
-| **Chamadas e tela compartilhada** | Chromium completo (WebRTC); no Wayland o compartilhamento usa o seletor do sistema (portal). |
-| **Bandeja do sistema** | Fechar só esconde a janela; o ícone da bandeja ganha um ponto vermelho com não lidas. |
-| **Detalhes** | Instância única, posição da janela lembrada, downloads direto em `~/Downloads` com aviso, links externos no navegador padrão. |
+| **Multiple isolated accounts** | Each account has its own session, cookies and sign-in (`persist:account-<id>`). Work/school and personal accounts. |
+| **Account button in the corner** | Sits where the Teams app launcher used to be. Shows the active account and a bell with the unread count of the *other* accounts. |
+| **Native notifications, with sound** | Sent straight to the system (libnotify/KDE), tagged with the account name. Clicking one opens the window on the right account and conversation. |
+| **Unread reminders** | Optional: repeats the notification every N seconds while there are unread messages. |
+| **Next meeting in the header** | "Daily Standup in 12 min", read from every account's calendar, highlighted when it's close. |
+| **Fullscreen alert** | Before each meeting (when it starts, or 1, 2, 5, 10, 15 or 30 min before), with *Join*, *Remind me at start* and *Dismiss*. Inspired by [Dato](https://sindresorhus.com/dato). |
+| **No account left asleep** | At startup every account loads all the way, including the ones in the background — otherwise their Teams never finishes booting and notifications never arrive. |
+| **Calls and screen sharing** | Full Chromium (WebRTC); on Wayland, screen sharing uses the system picker (portal). |
+| **System tray** | Closing only hides the window; the tray icon gets a red dot when there are unread messages. |
+| **Details** | Single instance, remembered window position, downloads straight to `~/Downloads` with a notice, external links in the default browser. |
 
 <table>
   <tr>
-    <td><img src="docs/contas.jpg" alt="Dropdown de contas" /></td>
-    <td><img src="docs/notificacoes.jpg" alt="Notificações nativas e lembrete" /></td>
+    <td><img src="docs/accounts.jpg" alt="Account dropdown" /></td>
+    <td><img src="docs/notifications.jpg" alt="Native notifications and reminder" /></td>
   </tr>
   <tr>
-    <td><img src="docs/proxima-reuniao.jpg" alt="Próxima reunião no cabeçalho" /></td>
-    <td><img src="docs/aviso-reuniao.jpg" alt="Aviso de reunião em tela cheia" /></td>
+    <td><img src="docs/next-meeting.jpg" alt="Next meeting in the header" /></td>
+    <td><img src="docs/meeting-alert.jpg" alt="Fullscreen meeting alert" /></td>
   </tr>
 </table>
 
-<sub>Imagens do vídeo de apresentação, com contas e conversas fictícias.</sub>
+<sub>Frames from the showcase video, with fictional accounts and conversations.</sub>
 
-## Instalação (Arch, CachyOS, Manjaro…)
+## Installation (Arch, CachyOS, Manjaro…)
 
-Requer [bun](https://bun.sh).
+Requires [bun](https://bun.sh).
 
 ```sh
 git clone https://github.com/dilincoln/teams-linux.git
 cd teams-linux/electron
 bun install
-bun node_modules/electron/install.js   # baixa o binário do Electron (o bun bloqueia o postinstall)
-bun run build                          # gera dist/teams-linux-<versão>.pacman
+bun node_modules/electron/install.js   # downloads the Electron binary (bun blocks postinstall)
+bun run build                          # produces dist/teams-linux-<version>.pacman
 sudo pacman -U dist/teams-linux-*.pacman
 ```
 
-Depois é só abrir **Teams** pelo menu. Para desinstalar: `sudo pacman -R teams-linux`.
+Then open **Teams** from the app menu. To uninstall: `sudo pacman -R teams-linux`.
 
-Iniciar já escondido na bandeja (por exemplo, no início da sessão): `teams-linux --minimized`.
+To start hidden in the tray (e.g. on login): `teams-linux --minimized`.
 
-### Rodar sem instalar
+### Run without installing
 
 ```sh
 cd electron
 bun install && bun node_modules/electron/install.js
 bun run start
-./install-desktop.sh   # opcional: atalho no menu apontando para esta pasta
+./install-desktop.sh   # optional: app menu launcher pointing to this folder
 ```
 
-## Configurações
+## Settings
 
-No botão de contas → **Configurações…**
+Account button → **Settings…**
 
-- **Lembrete de não lidas** — intervalo em segundos (0 desliga; mínimo 10).
-- **Som nas notificações** — liga/desliga e escolhe entre os sons do sistema (Ocean, Freedesktop), com botão para ouvir.
-- **Aviso em tela cheia** — antecedência do aviso de reunião, com botão para testar.
-- **Próxima reunião no cabeçalho** — mostra ou esconde.
+- **Unread reminder** — interval in seconds (0 turns it off; minimum 10).
+- **Play a sound with notifications** — on/off, plus a choice of system sounds (Ocean, Freedesktop) with a preview button.
+- **Fullscreen alert before meetings** — how early the meeting alert shows up, with a test button.
+- **Show the next meeting in the header** — show or hide it.
 
-Tudo fica em `~/.config/Teams/config.json`.
+Everything is stored in `~/.config/Teams/config.json`.
 
-## Como funciona
-
-```
-BaseWindow (sem moldura)
-├── WebContentsView por conta   → sessão própria (partition), preload-account.cjs
-└── WebContentsView local       → dropdown, diálogos e tela de carregamento (ui/)
-BrowserWindow em tela cheia     → aviso de reunião (ui/alert.*)
-```
-
-- **Notificações:** o preload troca `window.Notification` (e `showNotification` do service worker) por uma versão que passa pelo processo principal, que mostra a notificação nativa, toca o som e sabe de qual conta ela veio.
-- **Botão de contas e próxima reunião:** elementos injetados no cabeçalho do Teams; o CSS esconde os botões originais daquele canto e transforma o cabeçalho em área de arrastar (a janela não tem moldura).
-- **Não lidas:** vêm do título da página (`(3) Chat | Microsoft Teams`).
-- **Agenda:** o Teams já guarda, para cada conta, um token do Microsoft Graph com permissão de leitura da agenda. O app usa esse token para consultar `/me/calendarView` a cada 5 minutos — sem login extra. Nada sai da máquina além das chamadas ao próprio `graph.microsoft.com`.
-- **Contas em segundo plano:** uma `WebContentsView` escondida não renderiza, e o Teams fica preso na tela de abertura. Na inicialização cada conta fica visível (atrás da tela de carregamento) até o Teams terminar de montar; se uma conta recarregar depois, ela é "reaquecida" atrás da conta ativa, sem o usuário perceber.
-- **User-Agent:** sem `Electron/x`, para o Teams tratar como Chrome comum.
-
-### Estrutura
+## How it works
 
 ```
-electron/          o app
-  main.js          processo principal: janela, contas, bandeja, notificações, agenda, avisos
-  preload-*.cjs    pontes de cada página (contas, UI local, aviso de reunião)
-  ui/              dropdown, diálogos, carregamento e aviso em tela cheia
-video/             vídeo de apresentação (HyperFrames)
-docs/              vídeo renderizado e imagens deste README
+BaseWindow (frameless)
+├── WebContentsView per account   → own session (partition), preload-account.cjs
+└── local WebContentsView         → dropdown, dialogs and loading screen (ui/)
+fullscreen BrowserWindow          → meeting alert (ui/alert.*)
 ```
 
-## Vídeo
+- **Notifications:** the preload swaps `window.Notification` (and the service worker's `showNotification`) for a version that goes through the main process, which shows the native notification, plays the sound and knows which account it came from.
+- **Account button and next meeting:** elements injected into the Teams header; CSS hides the original buttons in that corner and turns the header into the drag area (the window is frameless).
+- **Unread count:** taken from the page title (`(3) Chat | Microsoft Teams`).
+- **Calendar:** Teams already keeps, for each account, a Microsoft Graph token allowed to read the calendar. The app uses that token to query `/me/calendarView` every 5 minutes — no extra sign-in. Nothing leaves the machine except the calls to `graph.microsoft.com` itself.
+- **Background accounts:** a hidden `WebContentsView` doesn't render, and Teams gets stuck on its splash screen. At startup each account stays visible (behind the loading screen) until Teams finishes mounting; if an account reloads later, it is "warmed up" again behind the active account, without the user noticing.
+- **User-Agent:** without `Electron/x`, so Teams treats it as regular Chrome.
 
-O vídeo de apresentação é uma composição HTML + GSAP feita com [HyperFrames](https://hyperframes.heygen.com), com mocks do app (contas e pessoas fictícias). Para renderizar de novo:
+### Layout
+
+```
+electron/          the app
+  main.js          main process: window, accounts, tray, notifications, calendar, alerts
+  preload-*.cjs    bridges for each page (accounts, local UI, meeting alert)
+  ui/              dropdown, dialogs, loading screen and fullscreen alert
+video/             showcase video (HyperFrames)
+docs/              rendered video and the images in this README
+```
+
+## Video
+
+The showcase video is an HTML + GSAP composition made with [HyperFrames](https://hyperframes.heygen.com), using mocks of the app (fictional accounts and people). To render it again:
 
 ```sh
 cd video
-bunx hyperframes preview                                  # editar / assistir
-bunx hyperframes render --output renders/teams-linux.mp4  # MP4 1080p
+bunx hyperframes preview                                  # edit / watch
+bunx hyperframes render --output renders/teams-linux.mp4  # 1080p MP4
 ```
 
-Trilha sonora: vídeo do [M-Atende](https://mutualtecnologia.com.br), da Mutual Tecnologia.
+Soundtrack: from the [M-Atende](https://mutualtecnologia.com.br) video, by Mutual Tecnologia.
 
-## Aviso
+## Disclaimer
 
-Projeto pessoal, sem vínculo com a Microsoft. Microsoft Teams é marca registrada da Microsoft Corporation. O app apenas carrega o Teams web oficial (`teams.microsoft.com` / `teams.live.com`).
+Personal project, not affiliated with Microsoft. Microsoft Teams is a trademark of Microsoft Corporation. The app only loads the official Teams web app (`teams.microsoft.com` / `teams.live.com`).
 
-## Licença
+## License
 
 [MIT](LICENSE)

@@ -1,4 +1,4 @@
-// Preload da janela de aviso de reunião em tela cheia.
+// Preload for the fullscreen meeting alert window.
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("meetingAlert", {

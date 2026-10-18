@@ -47,7 +47,7 @@ body {
   inset: 0;
 }
 
-/* ---- Fundo ---- */
+/* ---- Background ---- */
 
 #bg {
   overflow: hidden;
@@ -86,7 +86,7 @@ body {
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
 }
 
-/* ---- Tipografia comum ---- */
+/* ---- Shared typography ---- */
 
 .center {
   display: flex;
@@ -153,7 +153,7 @@ body {
   color: #d6d6e4;
 }
 
-/* ---- Problema ---- */
+/* ---- Problem ---- */
 
 .statement {
   margin: 0;
@@ -176,7 +176,7 @@ body {
   color: var(--violet);
 }
 
-/* ---- Palco do app ---- */
+/* ---- App stage ---- */
 
 #panel {
   position: absolute;
@@ -281,7 +281,7 @@ body {
   color: var(--muted);
 }
 
-/* Coluna de legendas à esquerda */
+/* Caption column on the left */
 
 .cap {
   position: absolute;
@@ -313,7 +313,7 @@ body {
   color: var(--muted);
 }
 
-/* ---- Janela do app (mock) ---- */
+/* ---- App window (mock) ---- */
 
 #win {
   position: absolute;
@@ -341,7 +341,7 @@ body {
   position: absolute;
   left: 4px;
   top: 3px;
-  width: 160px;
+  max-width: 160px;
   height: 38px;
   display: flex;
   align-items: center;
@@ -368,16 +368,15 @@ body {
   font-weight: 700;
 }
 
+/* Both names share one grid cell (they crossfade), so the bell sits right after the longer one */
 .sw-name {
-  flex: 1;
-  position: relative;
+  flex: none;
+  display: grid;
   height: 16px;
 }
 
 .sw-name span {
-  position: absolute;
-  left: 0;
-  top: 0;
+  grid-area: 1 / 1;
 }
 
 .sw-avatar span {
@@ -553,7 +552,7 @@ body {
   height: 22px;
 }
 
-/* Conteúdo por conta (lista + conversa) */
+/* Per-account content (list + conversation) */
 
 .acct {
   position: absolute;
@@ -747,7 +746,7 @@ body {
   color: #8f8f8f;
 }
 
-/* Dropdown de contas (mock do app) */
+/* Account dropdown (app mock) */
 
 #menu {
   position: absolute;
@@ -808,7 +807,7 @@ body {
   background: #3d3d3d;
 }
 
-/* Lupa (callout) */
+/* Magnifier (callout) */
 
 .callout {
   position: absolute;
@@ -888,7 +887,7 @@ body {
   z-index: 49;
 }
 
-/* Notificações do KDE (mock) */
+/* KDE notifications (mock) */
 
 .notif {
   position: absolute;
@@ -958,7 +957,7 @@ body {
   color: var(--violet);
 }
 
-/* ---- Aviso em tela cheia ---- */
+/* ---- Fullscreen alert ---- */
 
 #alert {
   background: radial-gradient(ellipse at 50% 35%, #23234a 0%, #0d0d12 70%);
@@ -1043,7 +1042,7 @@ body {
   color: #6f6f80;
 }
 
-/* ---- Carregamento e configurações (cartões do app) ---- */
+/* ---- Loading and settings (app cards) ---- */
 
 .card {
   position: absolute;
@@ -1251,7 +1250,7 @@ body {
   font-weight: 800;
 }
 
-/* ---- Encerramento ---- */
+/* ---- Outro ---- */
 
 #outro-icon {
   width: 150px;

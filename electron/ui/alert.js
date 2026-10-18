@@ -1,18 +1,18 @@
 const $ = (sel) => document.querySelector(sel);
 let meeting = null;
 
-const clock = (ms) => new Date(ms).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const clock = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 function whenText() {
   const now = Date.now();
   const seconds = Math.round((meeting.start - now) / 1000);
   if (seconds > 59) {
     const minutes = Math.ceil(seconds / 60);
-    return minutes < 60 ? `Começa em ${minutes} min` : `Começa em ${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+    return minutes < 60 ? `Starts in ${minutes} min` : `Starts in ${Math.floor(minutes / 60)} h ${minutes % 60} min`;
   }
-  if (seconds > 0) return `Começa em ${seconds} s`;
+  if (seconds > 0) return `Starts in ${seconds} s`;
   const late = Math.floor(-seconds / 60);
-  return late < 1 ? "Começando agora" : `Começou há ${late} min`;
+  return late < 1 ? "Starting now" : `Started ${late} min ago`;
 }
 
 function tick() {
@@ -20,7 +20,7 @@ function tick() {
   const when = $("#when");
   when.textContent = whenText();
   when.classList.toggle("now", Date.now() >= meeting.start - 60_000);
-  // Na hora da reunião não faz mais sentido "lembrar na hora".
+  // Once the meeting starts, "remind me at start" no longer makes sense.
   if (Date.now() >= meeting.start) $("#snooze").hidden = true;
 }
 
