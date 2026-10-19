@@ -163,7 +163,8 @@ button {
 #loading[hidden],
 .card[hidden],
 .btn[hidden],
-.field[hidden] {
+.field[hidden],
+.tab-panel[hidden] {
   display: none;
 }
 
@@ -254,7 +255,8 @@ button {
 }
 
 input:not([type]),
-input[type="number"] {
+input[type="number"],
+input[type="time"] {
   width: 100%;
   height: 36px;
   padding: 0 10px;
@@ -268,7 +270,8 @@ input[type="number"] {
 }
 
 input:not([type]):focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+input[type="time"]:focus {
   border-bottom-color: var(--accent);
 }
 
@@ -412,4 +415,129 @@ select:disabled + .btn {
 #settings-card {
   max-height: calc(100vh - 48px);
   overflow-y: auto;
+}
+
+/* ---- Settings tabs ---- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  height: 34px;
+  margin-bottom: -1px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Toggle buttons: meeting alerts, days of the week. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--card);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover:not([disabled]) {
+  background: var(--hover);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.row-between {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.row-between .hint {
+  margin-top: 0;
+}
+
+.row-between .btn {
+  flex: none;
+}
+
+.schedule {
+  margin: -6px 0 0 26px;
+}
+
+.schedule.disabled {
+  opacity: 0.5;
+}
+
+.schedule .btn[disabled],
+.schedule .chip[disabled] {
+  cursor: default;
+}
+
+.ranges {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranges:empty {
+  display: none;
+}
+
+.ranges li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranges input[type="time"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn.icon {
+  flex: none;
+  width: 34px;
+  padding: 0;
 }

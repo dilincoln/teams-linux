@@ -29,11 +29,12 @@ This app fixes that: every account lives isolated inside a single window, one cl
 | **Native notifications, with sound** | Sent straight to the system (libnotify/KDE), tagged with the account name. Clicking one opens the window on the right account and conversation. |
 | **Unread reminders** | Optional: repeats the notification every N seconds while there are unread messages. |
 | **Next meeting in the header** | "Daily Standup in 12 min", read from every account's calendar, highlighted when it's close. |
-| **Fullscreen alert** | Before each meeting (when it starts, or 1, 2, 5, 10, 15 or 30 min before), with *Join*, *Remind me at start* and *Dismiss*. Inspired by [Dato](https://sindresorhus.com/dato). |
+| **Fullscreen alert** | Before each meeting — as many times as you like (e.g. 15 min before, 5 min before and when it starts), with *Join*, *Remind me at start* and *Dismiss*. The sound repeats until you close it, and it shows on every monitor. Inspired by [Dato](https://sindresorhus.com/dato). |
 | **No account left asleep** | At startup every account loads all the way, including the ones in the background — otherwise their Teams never finishes booting and notifications never arrive. |
+| **Meetings in their own window** | Once a call connects, it moves into a window of its own — without reloading — and the main window goes back to chats and calendar. *Join* from the alert opens straight in one. The window closes when the call ends. |
 | **Calls and screen sharing** | Full Chromium (WebRTC); on Wayland, screen sharing uses the system picker (portal). |
 | **System tray** | Closing only hides the window; the tray icon gets a red dot when there are unread messages. |
-| **Details** | Single instance, remembered window position, downloads straight to `~/Downloads` with a notice, external links in the default browser. |
+| **Details** | Single instance, remembered window position, downloads straight to `~/Downloads` with a notice, external links in the default browser, and `'` + `c` gives `ç` on the US International layout (Chromium on Wayland would give `ć`). |
 
 <table>
   <tr>
@@ -78,9 +79,14 @@ bun run start
 
 Account button → **Settings…**
 
+**Notifications**
+
 - **Unread reminder** — interval in seconds (0 turns it off; minimum 10).
-- **Play a sound with notifications** — on/off, plus a choice of system sounds (Ocean, Freedesktop) with a preview button.
-- **Fullscreen alert before meetings** — how early the meeting alert shows up, with a test button.
+- **Play a sound with notifications** — on/off, plus a choice of system sounds (Ocean, Freedesktop) with a preview button. The fullscreen alert plays it every 1.5 s until closed.
+- **Fullscreen alert before meetings** — any combination of 30, 15, 10, 5, 2, 1 min before and at the start: one alert for each. With a test button.
+
+**Misc**
+
 - **Show the next meeting in the header** — show or hide it.
 
 Everything is stored in `~/.config/Teams/config.json`.
@@ -90,8 +96,9 @@ Everything is stored in `~/.config/Teams/config.json`.
 ```
 BaseWindow (frameless)
 ├── WebContentsView per account   → own session (partition), preload-account.cjs
+meeting BaseWindow per call       → the account's page with the call, moved out of the main window
 └── local WebContentsView         → dropdown, dialogs and loading screen (ui/)
-fullscreen BrowserWindow          → meeting alert (ui/alert.*)
+alert process (XWayland)          → meeting alert, fullscreen on every monitor (alert-process.js, ui/alert.*)
 ```
 
 - **Notifications:** the preload swaps `window.Notification` (and the service worker's `showNotification`) for a version that goes through the main process, which shows the native notification, plays the sound and knows which account it came from.

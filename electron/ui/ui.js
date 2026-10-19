@@ -143,6 +143,9 @@ function openDialog(next) {
   if (next.mode === "settings") {
     $("#reminder-seconds").value = String(state.settings.reminderSeconds);
     $("#keep-active").checked = state.settings.keepActive;
+    setPressed("#keep-active-days", "day", state.settings.keepActiveDays);
+    ranges = state.settings.keepActiveRanges.map((r) => ({ ...r }));
+    renderRanges();
     $("#sound").checked = state.settings.sound;
     $("#sound-name").replaceChildren(
       ...state.sounds.map(({ id, label }) => {
@@ -153,9 +156,11 @@ function openDialog(next) {
       }),
     );
     $("#sound-name").value = state.settings.soundName;
-    $("#meeting-alert").value = state.settings.meetingAlert === null ? "off" : String(state.settings.meetingAlert);
+    setPressed("#meeting-alerts", "minutes", state.settings.meetingAlerts);
     $("#show-next-meeting").checked = state.settings.showNextMeeting;
     syncSoundControls();
+    syncKeepActiveControls();
+    selectTab("notifications");
   } else if (next.mode === "remove") {
     $("#remove-name").textContent = account?.name ?? "";
   } else {
@@ -205,6 +210,108 @@ function syncSoundControls() {
   $("#sound-preview").disabled = off;
 }
 
+// ---- Settings ----
+
+const TABS = ["notifications", "misc"];
+
+function selectTab(name) {
+  for (const tab of TABS) {
+    const selected = tab === name;
+    $(`#tab-${tab}`).setAttribute("aria-selected", String(selected));
+    $(`#tab-${tab}`).tabIndex = selected ? 0 : -1;
+    $(`#panel-${tab}`).hidden = !selected;
+  }
+}
+
+for (const tab of TABS) $(`#tab-${tab}`).addEventListener("click", () => selectTab(tab));
+
+$(".tabs").addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  const i = TABS.findIndex((tab) => $(`#tab-${tab}`).getAttribute("aria-selected") === "true");
+  const next = TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length];
+  selectTab(next);
+  $(`#tab-${next}`).focus();
+});
+
+/** Toggle buttons ("chips"): the pressed ones are those whose data-<key> is in `values`. */
+function setPressed(group, key, values) {
+  for (const chip of $(group).querySelectorAll(".chip")) {
+    chip.setAttribute("aria-pressed", String(values.includes(Number(chip.dataset[key]))));
+  }
+}
+
+const pressed = (group, key) =>
+  [...$(group).querySelectorAll('.chip[aria-pressed="true"]')].map((chip) => Number(chip.dataset[key]));
+
+for (const group of ["#meeting-alerts", "#keep-active-days"]) {
+  $(group).addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip || chip.disabled) return;
+    chip.setAttribute("aria-pressed", String(chip.getAttribute("aria-pressed") !== "true"));
+  });
+}
+
+// "Keep active" time ranges being edited: [{ from: "08:00", to: "12:00" }, …]
+let ranges = [];
+
+function timeInput(value, label, onChange) {
+  const input = document.createElement("input");
+  input.type = "time";
+  input.required = true;
+  input.value = value;
+  input.setAttribute("aria-label", label);
+  input.addEventListener("change", () => onChange(input.value));
+  return input;
+}
+
+function renderRanges() {
+  const disabled = !$("#keep-active").checked;
+  $("#keep-active-ranges").replaceChildren(
+    ...ranges.map((range, i) => {
+      const li = document.createElement("li");
+      const dash = document.createElement("span");
+      dash.textContent = "–";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn icon";
+      remove.textContent = "✕";
+      remove.setAttribute("aria-label", "Remove range");
+      remove.addEventListener("click", () => {
+        ranges.splice(i, 1);
+        renderRanges();
+      });
+      const from = timeInput(range.from, "From", (v) => (range.from = v));
+      const to = timeInput(range.to, "To", (v) => (range.to = v));
+      for (const el of [from, to, remove]) el.disabled = disabled;
+      li.append(from, dash, to, remove);
+      return li;
+    }),
+  );
+  $("#ranges-hint").textContent = ranges.length
+    ? "A range that ends before it starts goes past midnight."
+    : "All day. Add ranges to limit it, e.g. 08:00–12:00 and 13:00–18:00.";
+}
+
+$("#add-range").addEventListener("click", () => {
+  // Continues from the last range: 08:00–12:00, then 13:00–18:00 by default.
+  const last = ranges.at(-1);
+  ranges.push(last ? { from: shiftTime(last.to, 60), to: shiftTime(last.to, 6 * 60) } : { from: "08:00", to: "12:00" });
+  renderRanges();
+  $("#keep-active-ranges li:last-child input")?.focus();
+});
+
+function shiftTime(time, minutes) {
+  const total = Math.min(Number(time.slice(0, 2)) * 60 + Number(time.slice(3)) + minutes, 23 * 60 + 59);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function syncKeepActiveControls() {
+  const off = !$("#keep-active").checked;
+  $("#keep-active-schedule").classList.toggle("disabled", off);
+  for (const el of $("#keep-active-schedule").querySelectorAll("button, input")) el.disabled = off;
+}
+
+$("#keep-active").addEventListener("change", syncKeepActiveControls);
 $("#sound").addEventListener("change", syncSoundControls);
 $("#sound-preview").addEventListener("click", () => window.teams.previewSound($("#sound-name").value));
 $("#meeting-alert-test").addEventListener("click", () => window.teams.testMeetingAlert());
@@ -214,9 +321,11 @@ settingsCard.addEventListener("submit", async (e) => {
   await window.teams.updateSettings({
     reminderSeconds: Number($("#reminder-seconds").value) || 0,
     keepActive: $("#keep-active").checked,
+    keepActiveDays: pressed("#keep-active-days", "day"),
+    keepActiveRanges: ranges.filter((r) => r.from && r.to),
     sound: $("#sound").checked,
     soundName: $("#sound-name").value,
-    meetingAlert: $("#meeting-alert").value === "off" ? null : Number($("#meeting-alert").value),
+    meetingAlerts: pressed("#meeting-alerts", "minutes"),
     showNextMeeting: $("#show-next-meeting").checked,
   });
   closeDialog();
@@ -231,6 +340,23 @@ $("#remove-confirm").addEventListener("click", async () => {
   overlay.hidden = true;
   window.teams.setDialogOpen(false);
   if (id) await window.teams.removeAccount(id);
+});
+
+// Shift+F11 three times in a row, with Settings open, shows or hides the "keep active" section.
+const REVEAL_PRESSES = 3;
+const REVEAL_WINDOW = 1500;
+let revealPresses = [];
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "F11" || !e.shiftKey || e.repeat || dialog?.mode !== "settings") return;
+  e.preventDefault();
+  const now = Date.now();
+  revealPresses = [...revealPresses.filter((t) => now - t < REVEAL_WINDOW), now];
+  if (revealPresses.length < REVEAL_PRESSES) return;
+  revealPresses = [];
+  const section = $("#keep-active-section");
+  section.hidden = !section.hidden;
+  if (!section.hidden) selectTab("misc");
 });
 
 document.addEventListener("keydown", (e) => {

@@ -1,13 +1,13 @@
 {
   "name": "teams-linux",
   "productName": "Teams",
-  "version": "0.3.0",
+  "version": "0.4.3",
   "description": "Microsoft Teams (web) for Linux with multiple accounts",
   "homepage": "https://github.com/dilincoln/teams-linux",
   "desktopName": "teams-linux.desktop",
   "private": true,
   "type": "module",
-  "main": "main.js",
+  "main": "entry.js",
   "scripts": {
     "start": "./node_modules/electron/dist/electron .",
     "build": "electron-builder --linux pacman"
@@ -24,7 +24,9 @@
     "appId": "br.com.diego.teams-linux",
     "productName": "Teams",
     "files": [
+      "entry.js",
       "main.js",
+      "alert-process.js",
       "preload-*.cjs",
       "ui/**",
       "assets/**",

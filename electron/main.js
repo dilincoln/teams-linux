@@ -1,7 +1,6 @@
 import {
   app,
   BaseWindow,
-  BrowserWindow,
   WebContentsView,
   Menu,
   Tray,
@@ -15,6 +14,7 @@ import {
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -97,12 +97,17 @@ const configPath = () => path.join(app.getPath("userData"), "config.json");
 const DEFAULT_SETTINGS = {
   reminderSeconds: 0, // repeat the unread notification every N seconds (0 = off)
   keepActive: false, // keep Teams from switching to "Away" when idle
+  keepActiveDays: [0, 1, 2, 3, 4, 5, 6], // days of the week it applies (0 = Sunday)
+  keepActiveRanges: [], // [{ from: "08:00", to: "12:00" }, …] (none = all day)
   sound: true, // play a sound with notifications (KDE plays none for apps without a .notifyrc)
   soundName: "ocean/message-new-instant",
-  meetingAlert: 5, // fullscreen alert N minutes before a meeting (null = off)
+  meetingAlerts: [5], // fullscreen alerts, each N minutes before a meeting (empty = off)
   showNextMeeting: true, // next meeting in the Teams header
 };
-const MEETING_ALERT_OPTIONS = [null, 0, 1, 2, 5, 10, 15, 30];
+const MEETING_ALERT_OPTIONS = [0, 1, 2, 5, 10, 15, 30];
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+// The fullscreen alert repeats the sound until it is closed, this long after each play.
+const ALERT_SOUND_GAP = 1500;
 
 // System sounds offered in the settings: "theme/name" in /usr/share/sounds/<theme>/stereo.
 const SOUNDS = [
@@ -128,7 +133,13 @@ function loadConfig() {
   try {
     saved = JSON.parse(fs.readFileSync(configPath(), "utf8"));
   } catch {}
-  return { accounts: [], active: null, bounds: null, ...saved, settings: { ...DEFAULT_SETTINGS, ...saved.settings } };
+  const settings = { ...DEFAULT_SETTINGS, ...saved.settings };
+  // Before multiple alerts: a single "meetingAlert" (minutes or null).
+  if ("meetingAlert" in settings) {
+    if (!saved.settings.meetingAlerts) settings.meetingAlerts = settings.meetingAlert === null ? [] : [settings.meetingAlert];
+    delete settings.meetingAlert;
+  }
+  return { accounts: [], active: null, bounds: null, ...saved, settings };
 }
 
 function saveConfig() {
@@ -405,7 +416,8 @@ function opensInApp(url) {
   }
 }
 
-function createAccountView(acct) {
+/** A Teams page in the account's session: the account's own page or a meeting window. */
+function createTeamsView(acct) {
   const ses = session.fromPartition(partitionOf(acct.id));
   setupSession(ses);
 
@@ -421,25 +433,35 @@ function createAccountView(acct) {
       backgroundThrottling: false,
     },
   });
-  const wc = view.webContents;
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    if (opensInApp(url)) return { action: "allow" };
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
+  return view;
+}
 
-  wc.on("page-title-updated", (_e, title) => setUnread(acct.id, parseUnread(title)));
+function createAccountView(acct) {
+  const view = createTeamsView(acct);
+  const wc = view.webContents;
+  // Once moved into a meeting window, the page no longer stands for the account.
+  const own = () => views.get(acct.id) === view;
+
+  wc.on("page-title-updated", (_e, title) => {
+    if (own()) setUnread(acct.id, parseUnread(title));
+  });
   wc.on("dom-ready", () => {
+    if (!own()) return;
     wc.insertCSS(PAGE_CSS).catch(() => {});
     sendSwitcherState(acct.id);
-    wc.send("keep-active", config.settings.keepActive);
+    wc.send("keep-active", keepActiveNow);
     wc.send("next-meeting", lastNextMeeting);
   });
   // New page (reload, redirect): its Teams has to load again.
   wc.on("did-start-navigation", (details) => {
-    if (!details.isMainFrame || details.isSameDocument) return;
+    if (!own() || !details.isMainFrame || details.isSameDocument) return;
     ready.delete(acct.id);
     if (acct.id !== config.active) warm(acct.id);
-  });
-  wc.setWindowOpenHandler(({ url }) => {
-    if (opensInApp(url)) return { action: "allow" };
-    shell.openExternal(url);
-    return { action: "deny" };
   });
   wc.loadURL(KIND_URL[acct.kind] ?? KIND_URL.work);
 
@@ -568,6 +590,7 @@ ipcMain.handle("remove-account", async (e, id) => {
     view.webContents.close();
     views.delete(id);
   }
+  for (const meeting of meetingWindows.values()) if (meeting.accountId === id) meeting.win.close();
   config.accounts = config.accounts.filter((a) => a.id !== id);
   unread.delete(id);
   ready.delete(id);
@@ -593,14 +616,23 @@ const lastNotification = new Map(); // account id -> { title, body } (for remind
 
 let lastSoundAt = 0;
 
-/** Plays a system sound; several notifications at once sound only once. */
-function playSound(id = config.settings.soundName, { force = false } = {}) {
+/**
+ * Plays a system sound; several notifications at once sound only once. `onDone` runs when it
+ * finishes (or fails to play).
+ */
+function playSound(id = config.settings.soundName, { force = false, onDone } = {}) {
   const sound = SOUNDS.find((s) => s.id === id) ?? SOUNDS[0];
   if (!sound || (!force && Date.now() - lastSoundAt < 1000)) return;
   lastSoundAt = Date.now();
+  let done = false;
+  const finish = () => {
+    if (!done) onDone?.();
+    done = true;
+  };
   const play = (cmd, fallback) =>
     spawn(cmd, [sound.file], { stdio: "ignore" })
-      .on("error", () => fallback?.())
+      .on("error", () => (fallback ? fallback() : finish()))
+      .on("exit", finish)
       .unref();
   play("pw-play", () => play("paplay"));
 }
@@ -637,6 +669,7 @@ ipcMain.on("notify", (e, { id: notificationId, title, body }) => {
 const KEEP_ACTIVE_EVERY = 60_000;
 let reminderTimer = null;
 let keepActiveTimer = null;
+let keepActiveNow = false; // "keep active" is on and we are inside its schedule
 
 /** While there are unread messages, repeat the notification (except for the account on screen). */
 function remindUnread() {
@@ -660,13 +693,38 @@ function nudgeAccounts() {
   }
 }
 
+const minutesOf = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+
+/** Whether `date` falls on one of the schedule's days and inside one of its ranges. */
+function inKeepActiveSchedule(date = new Date()) {
+  const { keepActiveDays, keepActiveRanges } = config.settings;
+  if (!keepActiveDays.includes(date.getDay())) return false;
+  if (!keepActiveRanges.length) return true;
+  const now = date.getHours() * 60 + date.getMinutes();
+  return keepActiveRanges.some(({ from, to }) => {
+    const [a, b] = [minutesOf(from), minutesOf(to)];
+    // A range that ends before it starts (22:00–02:00) crosses midnight.
+    return a <= b ? now >= a && now < b : now >= a || now < b;
+  });
+}
+
+/** Runs every minute while "keep active" is on: follows the schedule and moves the mouse. */
+function keepActiveTick() {
+  const on = config.settings.keepActive && inKeepActiveSchedule();
+  if (on !== keepActiveNow) {
+    keepActiveNow = on;
+    for (const view of views.values()) view.webContents.send("keep-active", on);
+  }
+  if (on) nudgeAccounts();
+}
+
 function applySettings() {
   const { reminderSeconds, keepActive } = config.settings;
   clearInterval(reminderTimer);
   reminderTimer = reminderSeconds > 0 ? setInterval(remindUnread, reminderSeconds * 1000) : null;
   clearInterval(keepActiveTimer);
-  keepActiveTimer = keepActive ? setInterval(nudgeAccounts, KEEP_ACTIVE_EVERY) : null;
-  for (const view of views.values()) view.webContents.send("keep-active", keepActive);
+  keepActiveTimer = keepActive ? setInterval(keepActiveTick, KEEP_ACTIVE_EVERY) : null;
+  keepActiveTick();
 }
 
 ipcMain.on("preview-sound", (e, id) => {
@@ -679,9 +737,14 @@ ipcMain.handle("update-settings", (e, settings) => {
   config.settings = {
     reminderSeconds: Number.isFinite(seconds) && seconds > 0 ? Math.max(seconds, 10) : 0,
     keepActive: !!settings?.keepActive,
+    keepActiveDays: [0, 1, 2, 3, 4, 5, 6].filter((d) => settings?.keepActiveDays?.includes?.(d)),
+    keepActiveRanges: (Array.isArray(settings?.keepActiveRanges) ? settings.keepActiveRanges : [])
+      .filter((r) => TIME.test(r?.from) && TIME.test(r?.to) && r.from !== r.to)
+      .map(({ from, to }) => ({ from, to }))
+      .sort((a, b) => a.from.localeCompare(b.from)),
     sound: !!settings?.sound,
     soundName: SOUNDS.some((s) => s.id === settings?.soundName) ? settings.soundName : DEFAULT_SETTINGS.soundName,
-    meetingAlert: MEETING_ALERT_OPTIONS.includes(settings?.meetingAlert) ? settings.meetingAlert : DEFAULT_SETTINGS.meetingAlert,
+    meetingAlerts: MEETING_ALERT_OPTIONS.filter((m) => settings?.meetingAlerts?.includes?.(m)).reverse(),
     showNextMeeting: !!settings?.showNextMeeting,
   };
   saveConfig();
@@ -696,11 +759,12 @@ ipcMain.handle("update-settings", (e, settings) => {
 // ---------------------------------------------------------------------------
 
 const calendars = new Map(); // account id -> Graph events (from the preload)
-const alerted = new Set(); // meetings already alerted ("account:id:start")
+const alerted = new Set(); // alerts already shown ("account:id:start:minutes")
 const snoozed = new Map(); // meeting -> time to alert again
 let lastNextMeeting = null;
-let alertWin = null;
+let alertProcess = null; // alert-process.js while the alert is showing
 let currentAlert = null;
+let alertSoundTimer = null;
 
 const meetingKey = (m) => `${m.accountId}:${m.id}:${m.start}`;
 
@@ -756,71 +820,79 @@ function refreshMeetings(force = false) {
 }
 
 function checkMeetingAlerts() {
-  const lead = config.settings.meetingAlert;
-  if (lead === null) return;
+  const leads = config.settings.meetingAlerts;
   const now = Date.now();
   for (const meeting of upcomingMeetings()) {
-    const key = meetingKey(meeting);
-    const due = snoozed.get(key) ?? (alerted.has(key) ? Infinity : meeting.start - lead * 60_000);
     // A meeting that started more than 2 min ago (e.g. when the app opens) gets no alert.
-    if (now < due || now > meeting.start + 2 * 60_000) continue;
-    alerted.add(key);
+    if (now > meeting.start + 2 * 60_000) continue;
+    const key = meetingKey(meeting);
+    const pending = leads.filter((lead) => !alerted.has(`${key}:${lead}`) && now >= meeting.start - lead * 60_000);
+    const snoozeDue = snoozed.has(key) && now >= snoozed.get(key);
+    if (!pending.length && !snoozeDue) continue;
+    // Several alerts already due (the app just opened, or the PC woke up) show up only once.
+    for (const lead of pending) alerted.add(`${key}:${lead}`);
     snoozed.delete(key);
     showMeetingAlert(meeting);
     return;
   }
 }
 
-function showMeetingAlert(meeting) {
-  currentAlert = meeting;
-  const data = { ...describe(meeting), canJoin: !!meeting.joinUrl, canSnooze: Date.now() < meeting.start - 30_000 };
-  if (config.settings.sound) playSound(undefined, { force: true });
-  if (alertWin) {
-    alertWin.webContents.send("alert", data);
-    alertWin.show();
-    alertWin.focus();
-    return;
-  }
-  alertWin = new BrowserWindow({
-    fullscreen: true,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    show: false,
-    icon: ICON,
-    title: "Meeting — Teams",
-    backgroundColor: "#0d0d12",
-    webPreferences: {
-      preload: path.join(here, "preload-alert.cjs"),
-      contextIsolation: true,
-      sandbox: true,
+/** Plays the sound over and over, with a pause in between, until the alert closes. */
+function loopAlertSound() {
+  clearTimeout(alertSoundTimer);
+  alertSoundTimer = null;
+  if (!alertProcess || !config.settings.sound) return;
+  playSound(undefined, {
+    force: true,
+    onDone: () => {
+      if (alertProcess && !alertSoundTimer) alertSoundTimer = setTimeout(loopAlertSound, ALERT_SOUND_GAP);
     },
-  });
-  alertWin.setMenu(null);
-  alertWin.loadFile(path.join(here, "ui", "alert.html"));
-  alertWin.once("ready-to-show", () => {
-    alertWin.webContents.send("alert", data);
-    alertWin.show();
-    alertWin.focus();
-  });
-  alertWin.on("closed", () => {
-    alertWin = null;
-    currentAlert = null;
   });
 }
 
-ipcMain.on("alert-action", (e, action) => {
-  if (!alertWin || e.sender !== alertWin.webContents) return;
+/**
+ * The alert runs in its own process (alert-process.js) under XWayland, so it can open a
+ * fullscreen window on every monitor; this process can't, because on Wayland the compositor
+ * picks the monitor. A new alert while one is showing just updates it.
+ */
+function showMeetingAlert(meeting) {
+  currentAlert = meeting;
+  const data = { ...describe(meeting), canJoin: !!meeting.joinUrl, canSnooze: Date.now() < meeting.start - 30_000 };
+  if (!alertProcess) {
+    const args = [...(app.isPackaged ? [] : [app.getAppPath()]), "--meeting-alert", "--ozone-platform=x11"];
+    const child = spawn(process.execPath, args, { stdio: ["pipe", "pipe", "inherit"] });
+    alertProcess = child;
+    readline.createInterface({ input: child.stdout }).on("line", (line) => {
+      try {
+        const message = JSON.parse(line);
+        if (message.type === "action") alertAction(message.action);
+      } catch {}
+    });
+    child.on("error", (err) => console.error("meeting alert:", err));
+    // "close" (not "exit"): only after the last stdout line, with the action, has been read.
+    child.on("close", () => {
+      if (alertProcess !== child) return;
+      alertProcess = null;
+      currentAlert = null;
+      clearTimeout(alertSoundTimer);
+      alertSoundTimer = null;
+    });
+    loopAlertSound();
+  }
+  alertProcess.stdin.write(`${JSON.stringify({ type: "alert", data })}\n`);
+}
+
+function alertAction(action) {
   const meeting = currentAlert;
-  alertWin.close();
+  currentAlert = null;
   if (!meeting) return;
   if (action === "join") {
-    focusAccount(meeting.accountId);
-    if (meeting.joinUrl) views.get(meeting.accountId)?.webContents.loadURL(meeting.joinUrl);
+    if (meeting.joinUrl) joinMeeting(meeting.accountId, meeting.joinUrl);
+    else focusAccount(meeting.accountId);
   } else if (action === "snooze" && Date.now() < meeting.start) {
     snoozed.set(meetingKey(meeting), meeting.start);
   }
-});
+}
 
 // From the settings: alert the next meeting right now, to preview it.
 ipcMain.on("test-meeting-alert", (e) => {
@@ -833,6 +905,87 @@ ipcMain.on("test-meeting-alert", (e) => {
 });
 
 setInterval(refreshMeetings, 15_000);
+
+// ---------------------------------------------------------------------------
+// Meeting windows: a call runs in its own window, so the main one stays free
+// ---------------------------------------------------------------------------
+
+// The window closes this long after the call ends (a call that reconnects right away stays).
+const CALL_END_GRACE = 3000;
+const meetingWindows = new Map(); // webContents -> { win, view, accountId, endTimer }
+
+function openMeetingWindow(accountId, view) {
+  const wc = view.webContents;
+  const { width, height } = win.getBounds();
+  const meetingWin = new BaseWindow({
+    width,
+    height,
+    minWidth: 480,
+    minHeight: 360,
+    icon: ICON,
+    title: `Meeting — ${account(accountId)?.name ?? "Teams"}`,
+    backgroundColor: "#1f1f1f",
+  });
+  meetingWin.contentView.addChildView(view);
+  const fit = () => {
+    const bounds = meetingWin.getContentBounds();
+    view.setBounds({ x: 0, y: 0, width: bounds.width, height: bounds.height });
+  };
+  meetingWin.on("resize", fit);
+  fit();
+  view.setVisible(true);
+  meetingWindows.set(wc, { win: meetingWin, view, accountId, endTimer: null });
+  // Closing the window leaves the meeting.
+  meetingWin.on("closed", () => {
+    clearTimeout(meetingWindows.get(wc)?.endTimer);
+    meetingWindows.delete(wc);
+    if (!wc.isDestroyed()) wc.close();
+  });
+  wc.focus();
+}
+
+/**
+ * A call started on the account's page: the page (with the call) moves into a meeting window
+ * without reloading, and the main window gets a fresh page of the same account.
+ */
+function detachMeeting(accountId) {
+  const acct = account(accountId);
+  const view = views.get(accountId);
+  if (!acct || !view) return;
+  views.delete(accountId);
+  ready.delete(accountId);
+  win.contentView.removeChildView(view);
+  openMeetingWindow(accountId, view);
+  view.webContents.send("meeting-window");
+  createAccountView(acct);
+  applyVisibility();
+  emitState();
+}
+
+/** Join link (from the meeting alert): straight into a meeting window. */
+function joinMeeting(accountId, url) {
+  const acct = account(accountId);
+  if (!acct) return;
+  const view = createTeamsView(acct);
+  // Registered before loading, so the preload finds it a meeting window from the start.
+  openMeetingWindow(accountId, view);
+  view.webContents.loadURL(url);
+}
+
+ipcMain.on("is-meeting-window", (e) => {
+  e.returnValue = meetingWindows.has(e.sender);
+});
+
+ipcMain.on("call-state", (e, active) => {
+  const meeting = meetingWindows.get(e.sender);
+  if (meeting) {
+    clearTimeout(meeting.endTimer);
+    meeting.endTimer = active ? null : setTimeout(() => meeting.win.close(), CALL_END_GRACE);
+    return;
+  }
+  const entry = [...views].find(([, v]) => v.webContents === e.sender);
+  if (entry && active) detachMeeting(entry[0]);
+});
 
 // ---------------------------------------------------------------------------
 // Window, tray and lifecycle

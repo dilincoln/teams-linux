@@ -4,12 +4,27 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 const CLICK_MESSAGE = "teams-linux:notification-click";
 const KEEP_ACTIVE_MESSAGE = "teams-linux:keep-active";
+const CALL_MESSAGE = "teams-linux:call";
+
+// A meeting window (its own window, outside the main one) only runs the meeting: no account
+// button, next meeting or calendar. The main process ignores its notifications and unread.
+let meetingWindow = ipcRenderer.sendSync("is-meeting-window") === true;
 
 ipcRenderer.on("notification-click", (_event, id) => {
   window.postMessage({ type: CLICK_MESSAGE, id }, "*");
 });
 ipcRenderer.on("keep-active", (_event, on) => {
   window.postMessage({ type: KEEP_ACTIVE_MESSAGE, on: !!on }, "*");
+});
+// The page was moved into a meeting window, with the call going on.
+ipcRenderer.on("meeting-window", () => {
+  meetingWindow = true;
+  switcher?.remove();
+  nextMeetingEl?.remove();
+});
+// From the page (see below): whether a call is connected.
+window.addEventListener("message", (e) => {
+  if (e.source === window && e.data?.type === CALL_MESSAGE) ipcRenderer.send("call-state", !!e.data.active);
 });
 
 contextBridge.exposeInMainWorld("__teamsLinux", {
@@ -83,7 +98,7 @@ function renderSwitcher() {
 }
 
 function mountSwitcher() {
-  if (!TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
+  if (meetingWindow || !TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
   switcher ??= buildSwitcher();
   // Outside <body>, so Teams' React doesn't remove it.
   if (!switcher.isConnected) document.documentElement.append(switcher);
@@ -105,6 +120,7 @@ window.addEventListener("DOMContentLoaded", () => {
 // always show up when the account loads behind another one.
 const TEAMS_READY_SELECTOR = '[data-tid="all-phased-rendering-complete"], [data-tid="app-layout-area--nav"]';
 window.addEventListener("DOMContentLoaded", () => {
+  if (meetingWindow) return;
   if (!TEAMS_HOSTS.test(location.hostname)) {
     ipcRenderer.send("account-ready");
     return;
@@ -181,6 +197,7 @@ async function fetchCalendar() {
 }
 
 async function calendarLoop() {
+  if (meetingWindow) return;
   const ok = await fetchCalendar();
   setTimeout(calendarLoop, ok ? CALENDAR_EVERY : CALENDAR_RETRY);
 }
@@ -208,7 +225,7 @@ function relativeTime(start, end) {
 const clock = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 function renderNextMeeting() {
-  if (!TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
+  if (meetingWindow || !TEAMS_HOSTS.test(location.hostname) || !document.documentElement) return;
   if (!nextMeetingEl) {
     nextMeetingEl = el("div");
     nextMeetingEl.id = "teams-linux-next-meeting";
@@ -246,8 +263,8 @@ window.addEventListener("resize", () => renderNextMeeting());
 // Replaces window.Notification (permission always granted) with a version that goes through
 // the main process, so a click opens the window on the right account.
 contextBridge.executeInMainWorld({
-  args: [CLICK_MESSAGE, KEEP_ACTIVE_MESSAGE],
-  func: (clickMessage, keepActiveMessage) => {
+  args: [CLICK_MESSAGE, KEEP_ACTIVE_MESSAGE, CALL_MESSAGE],
+  func: (clickMessage, keepActiveMessage, callMessage) => {
     const bridge = window.__teamsLinux;
     const live = new Map();
     let seq = 0;
@@ -313,6 +330,85 @@ contextBridge.executeInMainWorld({
       n._fire("click");
       n.close();
     });
+
+    // Calls: Teams only opens WebRTC connections for calls and meetings. "Active" while any of
+    // them is connected (not while it rings); over once they have all closed.
+    const NativePeerConnection = window.RTCPeerConnection;
+    if (NativePeerConnection) {
+      const connections = new Set();
+      let active = false;
+      const report = () => {
+        const now = [...connections].some((pc) => pc.connectionState === "connected");
+        if (now === active) return;
+        active = now;
+        window.postMessage({ type: callMessage, active }, "*");
+      };
+      class PeerConnection extends NativePeerConnection {
+        constructor(...args) {
+          super(...args);
+          connections.add(this);
+          this.addEventListener("connectionstatechange", () => {
+            if (this.connectionState === "closed" || this.connectionState === "failed") connections.delete(this);
+            report();
+          });
+        }
+        // close() fires no connectionstatechange.
+        close() {
+          super.close();
+          connections.delete(this);
+          report();
+        }
+      }
+      window.RTCPeerConnection = PeerConnection;
+      if (window.webkitRTCPeerConnection) window.webkitRTCPeerConnection = PeerConnection;
+    }
+
+    // Dead acute + c: on Wayland, without an input method running, Chromium composes accents
+    // with its own built-in (en_US) table and gives ć, ignoring the system's ç (~/.XCompose,
+    // GTK_IM_MODULE=cedilla). The composition can't be cancelled, so the character is swapped
+    // right after it.
+    const CEDILLA = { "ć": "ç", "Ć": "Ç" };
+
+    // The Teams message box is a CKEditor 5: it keeps its own model of the text and ignores
+    // DOM edits, so the swap goes through its model.
+    function swapInEditor(editor, typed, replacement) {
+      const { model } = editor;
+      model.change((writer) => {
+        const selection = model.document.selection;
+        const end = selection.getFirstPosition();
+        if (!selection.isCollapsed || !end || end.offset < 1) return;
+        const range = writer.createRange(end.getShiftedBy(-1), end);
+        const text = [...range.getItems()].map((item) => item.data ?? "").join("");
+        if (text !== typed) return;
+        model.insertContent(writer.createText(replacement, selection.getAttributes()), range);
+      });
+    }
+
+    function swapInPage(field, typed, replacement) {
+      if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) {
+        const end = field.selectionEnd;
+        if (field.selectionStart !== end || field.value.slice(end - 1, end) !== typed) return;
+        field.setSelectionRange(end - 1, end);
+      } else {
+        const selection = getSelection();
+        if (!selection.rangeCount || !selection.isCollapsed) return;
+        selection.modify("extend", "backward", "character");
+        if (selection.toString() !== typed) return selection.collapseToEnd();
+      }
+      document.execCommand("insertText", false, replacement);
+    }
+
+    document.addEventListener("compositionend", (e) => {
+      const typed = e.data;
+      const replacement = CEDILLA[typed];
+      if (!replacement) return;
+      setTimeout(() => {
+        const field = document.activeElement;
+        const editor = field?.closest?.(".ck-editor__editable")?.ckeditorInstance;
+        if (editor) swapInEditor(editor, typed, replacement);
+        else swapInPage(field, typed, replacement);
+      }, 0);
+    }, true);
 
     Object.defineProperty(window, "Notification", { value: TeamsNotification, writable: true, configurable: true });
     if (window.ServiceWorkerRegistration) {

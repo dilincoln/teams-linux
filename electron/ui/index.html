@@ -57,60 +57,95 @@
       <form id="settings-card" class="card" hidden>
         <h1>Settings</h1>
 
-        <label class="field">
-          <span>Unread reminder (seconds)</span>
-          <input id="reminder-seconds" type="number" min="0" step="1" inputmode="numeric" />
-          <small class="hint">Repeats the notification while there are unread messages. 0 turns it off; the minimum is 10.</small>
-        </label>
+        <div class="tabs" role="tablist" aria-label="Settings">
+          <button type="button" role="tab" class="tab" id="tab-notifications" aria-controls="panel-notifications">Notifications</button>
+          <button type="button" role="tab" class="tab" id="tab-misc" aria-controls="panel-misc">Misc</button>
+        </div>
 
-        <label class="check-field">
-          <input id="sound" type="checkbox" />
-          <span>
-            Play a sound with notifications
-            <small class="hint">Also applies to unread reminders.</small>
-          </span>
-        </label>
+        <div id="panel-notifications" class="tab-panel" role="tabpanel" aria-labelledby="tab-notifications">
+          <label class="field">
+            <span>Unread reminder (seconds)</span>
+            <input id="reminder-seconds" type="number" min="0" step="1" inputmode="numeric" />
+            <small class="hint">Repeats the notification while there are unread messages. 0 turns it off; the minimum is 10.</small>
+          </label>
 
-        <div class="field">
-          <span>Sound</span>
-          <div class="sound-row">
-            <select id="sound-name" aria-label="Sound"></select>
-            <button type="button" id="sound-preview" class="btn">Play</button>
+          <label class="check-field">
+            <input id="sound" type="checkbox" />
+            <span>
+              Play a sound with notifications
+              <small class="hint">Also applies to unread reminders. The meeting alert repeats it until closed.</small>
+            </span>
+          </label>
+
+          <div class="field">
+            <span>Sound</span>
+            <div class="sound-row">
+              <select id="sound-name" aria-label="Sound"></select>
+              <button type="button" id="sound-preview" class="btn">Play</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Fullscreen alert before meetings</span>
+            <div class="chips" id="meeting-alerts" role="group" aria-label="Fullscreen alerts">
+              <button type="button" class="chip" data-minutes="30">30 min</button>
+              <button type="button" class="chip" data-minutes="15">15 min</button>
+              <button type="button" class="chip" data-minutes="10">10 min</button>
+              <button type="button" class="chip" data-minutes="5">5 min</button>
+              <button type="button" class="chip" data-minutes="2">2 min</button>
+              <button type="button" class="chip" data-minutes="1">1 min</button>
+              <button type="button" class="chip" data-minutes="0">At start</button>
+            </div>
+            <div class="row-between">
+              <small class="hint">Pick any number of them: one alert for each. None turns it off.</small>
+              <button type="button" id="meeting-alert-test" class="btn">Test</button>
+            </div>
           </div>
         </div>
 
-        <div class="field">
-          <span>Fullscreen alert before meetings</span>
-          <div class="sound-row">
-            <select id="meeting-alert" aria-label="Fullscreen alert">
-              <option value="off">Off</option>
-              <option value="0">When it starts</option>
-              <option value="1">1 min before</option>
-              <option value="2">2 min before</option>
-              <option value="5">5 min before</option>
-              <option value="10">10 min before</option>
-              <option value="15">15 min before</option>
-              <option value="30">30 min before</option>
-            </select>
-            <button type="button" id="meeting-alert-test" class="btn">Test</button>
+        <div id="panel-misc" class="tab-panel" role="tabpanel" aria-labelledby="tab-misc" hidden>
+          <label class="check-field">
+            <input id="show-next-meeting" type="checkbox" />
+            <span>
+              Show the next meeting in the header
+              <small class="hint">e.g. "Daily in 12 min", next to the Teams buttons in the top-right corner.</small>
+            </span>
+          </label>
+
+          <div id="keep-active-section" hidden>
+            <label class="check-field">
+              <input id="keep-active" type="checkbox" />
+              <span>
+                Keep Teams from going Away
+                <small class="hint">Keeps your status Available even when the window is hidden or idle, on the days and times below.</small>
+              </span>
+            </label>
+
+            <div id="keep-active-schedule" class="schedule">
+              <div class="field">
+                <span>Days</span>
+                <div class="chips" id="keep-active-days" role="group" aria-label="Days">
+                  <button type="button" class="chip" data-day="1">Mon</button>
+                  <button type="button" class="chip" data-day="2">Tue</button>
+                  <button type="button" class="chip" data-day="3">Wed</button>
+                  <button type="button" class="chip" data-day="4">Thu</button>
+                  <button type="button" class="chip" data-day="5">Fri</button>
+                  <button type="button" class="chip" data-day="6">Sat</button>
+                  <button type="button" class="chip" data-day="0">Sun</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <span>Hours</span>
+                <ul id="keep-active-ranges" class="ranges"></ul>
+                <div class="row-between">
+                  <small class="hint" id="ranges-hint">All day. Add ranges to limit it, e.g. 08:00–12:00 and 13:00–18:00.</small>
+                  <button type="button" id="add-range" class="btn">Add range</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <label class="check-field">
-          <input id="show-next-meeting" type="checkbox" />
-          <span>
-            Show the next meeting in the header
-            <small class="hint">e.g. "Daily in 12 min", next to the Teams buttons in the top-right corner.</small>
-          </span>
-        </label>
-
-        <label class="check-field">
-          <input id="keep-active" type="checkbox" />
-          <span>
-            Keep Teams from going Away
-            <small class="hint">Keeps your status Available even when the window is hidden or idle.</small>
-          </span>
-        </label>
 
         <div class="actions">
           <button type="button" id="settings-cancel" class="btn">Cancel</button>
